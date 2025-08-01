@@ -1,40 +1,39 @@
 import { bannerModel, userModel } from "../../database/models";
 import { Request, Response } from "express";
-import { createData, responseMessage, updateData } from "../../helper";
+import { countData, createData, getData, responseMessage, updateData } from "../../helper";
 import { apiResponse } from "../../common";
 import QRCode from "qrcode";
 import path from "path";
 import fs from 'fs';
 import { config } from "../../../config";
+import { reqInfo } from "../../helper/winston_logger";
 
 let ObjectId = require('mongoose').Types.ObjectId;
 
 export const addBanner = async (req, res) => {
+  reqInfo(req)
   try {
     const body = req.body;
-
     const user = await userModel.findOne({ _id: new ObjectId(body.userId), isDeleted: false });
     if (!user) return res.status(404).json(new apiResponse(404, responseMessage?.getDataNotFound("user"), {}, {}));
 
     if (user && user.link) {
       const qrCodeBase64 = await QRCode.toDataURL(user.link);
-
       const base64Data = qrCodeBase64.replace(/^data:image\/png;base64,/, "");
 
       const fileName = `qr_${Date.now()}.png`;
-      const uploadDir = path.join(__dirname, "../../../uploads");
+      const uploadDir = path.join(__dirname, "../../../../uploads");
       const filePath = path.join(uploadDir, fileName);
-
+    
       fs.mkdirSync(uploadDir, { recursive: true });
       fs.writeFileSync(filePath, base64Data, "base64");
-
+      
       const publicUrl = `${config.BACKEND_URL}/uploads/${fileName}`;
       body.qrCode = publicUrl;
     }
-
     const response = await bannerModel.create(body);
+    
     return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess('Banner data is successfully'), response, {}));
-
   } catch (error) {
     console.error(error);
     return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
@@ -42,14 +41,15 @@ export const addBanner = async (req, res) => {
 };
 
 export const updateBanner = async (req, res) => {
+  reqInfo(req)
   try {
-    const { id, userId, QRcode, ...body } = req.body;
+    const { BannerId, userId, qrCode, ...body } = req.body;
 
-    if (!id) {
+    if (!BannerId) {
       return res.status(400).json(new apiResponse(400, "Banner ID is required", {}, {}));
     }
 
-    let isExist = await bannerModel.findOne({ _id: new ObjectId(id), isDeleted: false });
+    let isExist = await bannerModel.findOne({ _id: new ObjectId(BannerId), isDeleted: false });
     if (!isExist) {
       return res.status(404).json(new apiResponse(404, responseMessage?.getDataNotFound("Banner"), {}, {}));
     }
@@ -88,7 +88,7 @@ export const updateBanner = async (req, res) => {
         body.qrCode = qrCodeBase64;
       }
     }
-    const response = await updateData(bannerModel, { _id: new ObjectId(id) }, body, {});
+    const response = await updateData(bannerModel, { _id: new ObjectId(BannerId) }, body, {});
     if (!response) {
       return res.status(404).json(new apiResponse(404, "Banner not found", {}, {}));
     }
@@ -100,54 +100,65 @@ export const updateBanner = async (req, res) => {
 };
 
 
-
-export const getBannerById = async (req: Request, res: Response) => {
+export const getBannerById = async (req, res) => {
+  reqInfo(req)
   try {
-    const { id } = req.params;
-    const banner = await bannerModel.findOne({ _id: id });
+    const { BannerId } = req.params;
+    const banner = await bannerModel.findOne({ _id: new ObjectId(BannerId) });
     if (!banner) {
       return res.status(404).json({ success: false, message: "Banner not found", });
     }
-    res.status(200).json({ success: true, message: "Banner fetched successfully", data: banner, });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: "Failed to fetch banner", error: error.message, });
+    return res.status(200).json(new apiResponse(200, responseMessage.getDataSuccess("Banner fetched successfully"), banner, {}));
+  } catch (error) {
+    return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
   }
 };
 
-export const getAllBanners = async (req: Request, res: Response) => {
+export const getAllBanner = async (req, res) => {
+  reqInfo(req);
   try {
-    const { page = 1, limit = 10 } = req.query;
+    let { search, page, limit } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
+    if (search) {
+      criteria.title = { $regex: search, $options: 'si' };
+    }
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 1;
+    options.sort = { createdAt: -1 };;
 
-    const skip = (Number(page) - 1) * Number(limit);
+    if (page && limit) {
+      options.skip = (parseInt(page) - 1) * parseInt(limit);
+      options.limit = parseInt(limit);
+    }
 
-    const banners = await bannerModel.find({ isDeleted: false })
-      .skip(skip)
-      .limit(Number(limit))
-      .sort({ createdAt: -1 }); // Optional: sort by newest first
+    const response = await getData(bannerModel, criteria, {}, options);
+    const totalCount = await countData(bannerModel, criteria);
 
-    const total = await bannerModel.countDocuments({ isDeleted: false });
+    const stateObj = {
+      page: pageNum,
+      limit: limitNum,
+      page_limit: Math.ceil(totalCount / limitNum) || 1,
+    };
 
-    res.status(200).json({
-      success: true, message: "Banners fetched successfully", data: banners, total, currentPage: Number(page), totalPages: Math.ceil(total / Number(limit)),
-    });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: "Failed to fetch banners", error: error.message, });
+    return res.status(200).json(new apiResponse(200, responseMessage.getDataSuccess('Banners'), { banner_data: response, totalData: totalCount, state: stateObj }, {}));
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
   }
 };
 
-export const deleteBannerById = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
 
-    const deletedBanner = await bannerModel.findOneAndUpdate({ _id: id, isDeleted: false },
+export const deleteBannerById = async (req, res) => {
+  try {
+    const { BannerId } = req.params;
+
+    const deletedBanner = await bannerModel.findOneAndUpdate({ _id: new ObjectId(BannerId), isDeleted: false },
       { isDeleted: true, deletedAt: new Date() }, { new: true }
     );
     if (!deletedBanner) {
       return res.status(404).json({ success: false, message: "Banner not found or already deleted", });
     }
-    return res.status(200).json({ success: true, message: "Banner soft deleted successfully", data: deletedBanner, });
-  }
-  catch (error: any) {
-    return res.status(500).json({ success: false, message: "Failed to soft delete banner", error: error.message, });
+    return res.status(200).json(new apiResponse(200, responseMessage.deleteDataSuccess("banner"), deletedBanner, {}));
+  } catch (error) {
+    return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
   }
 };

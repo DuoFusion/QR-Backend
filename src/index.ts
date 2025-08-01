@@ -10,8 +10,7 @@ import multer from "multer"
 import fs from 'fs';
 const app = express();
 
-
-app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "..", "..","uploads")));
 const fileFilter = (req, file, cb) => {
   if (
     file.mimetype === "image/png" ||

@@ -12,7 +12,7 @@ const bannerSchema = new mongoose.Schema({
         location: { type: String },
     },
     email: { type: String, required: true },
-    phone: { type: String, required: true },
+    phoneNumber: { type: String, required: true },
     qrCode: { type: String },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
     isDeleted: { type: Boolean, default: false }

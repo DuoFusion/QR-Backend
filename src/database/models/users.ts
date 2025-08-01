@@ -6,13 +6,21 @@ const usersSchema = new mongoose.Schema({
     firstName: { type: String },
     lastName: { type: String },
     phoneNumber: { type: String, unique: true },
-    address: { type: String },
     email: { type: String, unique: true },
+
+    address: { type: String },
     type: { type: String },
     link: { type: String },
     role: { type: String, enum: ADMIN_ROLES, default: 'user' },
+    password: { type: String, required: true },
+    confirmPassword: { type: String },
 
-    isDeleted: { type: Boolean, default: false }
+    otp: { type: Number, default: null },
+    otpExpireTime: { type: Date, default: null },
+    isEmailVerified: { type: Boolean, default: false },
+
+    isDeleted: { type: Boolean, default: false },
+    isBlocked: { type: Boolean, default: false },
 
 }, { timestamps: true, versionKey: false });
 

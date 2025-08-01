@@ -1,33 +1,34 @@
 
 import { Request, Response } from "express";
-import bcryptjs from "bcryptjs";
+import bcrypt from "bcrypt";
 import { apiResponse } from "../../common";
-import { responseMessage,sendEmail } from "../../helper";
-import { adminModel } from "../../database/models";
+import { responseMessage, sendEmail } from "../../helper";
+import { userModel } from "../../database/models";
 import jwt from "jsonwebtoken";
+import { reqInfo } from "../../helper/winston_logger";
+import { config } from "../../../config";
 
-
-
-const JWT_SECRET = process.env.JWT_SECRET || "yourSecretKey";
+const JWT_TOKEN_SECRET = config.JWT_TOKEN_SECRET || "yourSecretKey";
 const TOKEN_EXPIRE = "1d";
 
-export const signUp = async (req: Request, res: Response) => {
+export const signUp = async (req, res) => {
+  reqInfo(req);
   try {
     const body = req.body;
-    let existingUser = await adminModel.findOne({ email: body?.email, isDeleted: false });
+    let existingUser = await userModel.findOne({ email: body?.email, isDeleted: false });
 
     if (existingUser)
       return res.status(409).json(new apiResponse(409, responseMessage?.alreadyEmail || "Email already exists", {}, {}));
 
-    existingUser = await adminModel.findOne({ phoneNumber: body?.phoneNumber, isDeleted: false });
+    existingUser = await userModel.findOne({ phoneNumber: body?.phoneNumber, isDeleted: false });
     if (existingUser)
       return res.status(409).json(new apiResponse(409, "Phone number already exists", {}, {}));
 
-    const salt = bcryptjs.genSaltSync(10);
-    const hashedPassword = await bcryptjs.hash(body.password, salt);
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = await bcrypt.hash(body.password, salt);
     body.password = hashedPassword;
 
-    const savedUser = await new adminModel(body).save();
+    const savedUser = await new userModel(body).save();
     if (!savedUser)
       return res.status(500).json(new apiResponse(500, responseMessage?.errorMail || "Error saving user", {}, {}));
 
@@ -38,57 +39,64 @@ export const signUp = async (req: Request, res: Response) => {
   }
 };
 
-
-export const login = async (req: Request, res: Response) => {
+export const login = async (req, res) => {
+  reqInfo(req);
   try {
     const { email, password } = req.body;
-    const user = await adminModel.findOne({ email, isDeleted: false }).lean();
 
+    const user = await userModel.findOne({ email, isDeleted: false });
     if (!user) {
-      return res.status(400).json(new apiResponse(400, "Invalid email or password", {}, {}));
+      return res.status(400).json(new apiResponse(400, "Invalid email", {}, {}));
     }
 
-    const isMatch = await bcryptjs.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json(new apiResponse(400, "Invalid email or password", {}, {}));
+    if (user.isBlocked) {
+      return res.status(403).json(new apiResponse(403, 'Your account is blocked', {}, {}));
     }
-
+    
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json(new apiResponse(400, "Invalid password", {}, {}));
+    }
     const token = jwt.sign(
-      { id: user._id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: TOKEN_EXPIRE }
+      {
+        _id: user._id,
+        role: user.role
+      },
+      JWT_TOKEN_SECRET,
+      {}
     );
 
     const responseData = {
       token,
       user: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         phoneNumber: user.phoneNumber,
         userType: user.role || "user"
       }
     };
 
-    return res.status(200).json(
-      new apiResponse(200, "Login successful", responseData, {})
-    );
+    return res.status(200).json(new apiResponse(200, "Login successful", responseData, {}));
   } catch (error) {
-    console.error("Login error:", error);
-    return res.status(500).json(
-      new apiResponse(500, "Internal server error", {}, error)
-    );
+    return res.status(500).json(new apiResponse(500, responseMessage?.internalServerError || "Internal server error", {}, error));
   }
 };
 
 
 
-export const forgot_password = async (req: Request, res: Response) => {
+
+
+export const forgot_password = async (req, res) => {
   let body = req.body,
     otpFlag = 1,
     otp = 0;
+  reqInfo(req);
 
   try {
     body.isActive = true;
-    const user = await adminModel.findOne({
+    const user = await userModel.findOne({
       email: body.email,
       isDeleted: false
     });
@@ -98,12 +106,12 @@ export const forgot_password = async (req: Request, res: Response) => {
 
     while (otpFlag === 1) {
       otp = Math.floor(100000 + Math.random() * 900000);
-      const isUsed = await adminModel.findOne({ otp });
+      const isUsed = await userModel.findOne({ otp });
       if (!isUsed) otpFlag = 0;
     }
     const otpExpireTime = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
-    await adminModel.findByIdAndUpdate(user._id, { otp, otpExpireTime });
+    await userModel.findOneAndUpdate(user._id, { otp, otpExpireTime });
 
     await sendEmail(user.email, "Password Reset OTP", `Your OTP is: ${otp}`);
 
@@ -115,11 +123,12 @@ export const forgot_password = async (req: Request, res: Response) => {
 };
 
 
-export const verify_otp = async (req: Request, res: Response) => {
+export const verify_otp = async (req, res) => {
+  reqInfo(req);
   try {
     const { email, otp } = req.body;
 
-    const user = await adminModel.findOne({ email, isDeleted: false });
+    const user = await userModel.findOne({ email, isDeleted: false });
     if (!user || user.otp !== Number(otp)) {
       return res.status(400).json(new apiResponse(400, responseMessage?.invalidOTP, {}, {}));
     }
@@ -135,37 +144,43 @@ export const verify_otp = async (req: Request, res: Response) => {
 };
 
 
-
-export const reset_password = async (req: Request, res: Response) => {
+export const reset_password = async (req, res) => {
+  reqInfo(req);
   try {
     const { email, otp, newpassword } = req.body;
 
-    const user = await adminModel.findOne({ email, isDeleted: false });
+    const user = await userModel.findOne({ email, isDeleted: false });
 
     if (!user) {
       return res.status(400).json(new apiResponse(400, "Email not found", {}, {}));
     }
 
-    if (user.otp !== Number(otp)) {
-      return res.status(400).json(new apiResponse(400, "Invalid OTP", {}, {}));
-    }
+    const hashedpassword = await bcrypt.hash(newpassword, 10);
 
-    if (user.otpExpireTime && user.otpExpireTime < new Date()) {
-      return res.status(400).json(new apiResponse(400, "OTP has expired", {}, {}));
-    }
-
-    const hashedpassword = await bcryptjs.hash(newpassword, 10);
-
-    await adminModel.findByIdAndUpdate(user._id, {
+    await userModel.findOneAndUpdate({ _id: user._id }, {
       password: hashedpassword,
       otp: null,
       otpExpireTime: null
     });
 
-    return res.status(200).json(new apiResponse(200, "Password has been reset successfully", {}, {}));
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      JWT_TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    const responseData = {
+      token,
+      user: {
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        userType: user.role || "user"
+      }
+    };
+
+    return res.status(200).json(new apiResponse(200, "Password has been reset successfully", responseData, {}));
   } catch (error) {
     console.error("Reset password error:", error);
     return res.status(500).json(new apiResponse(500, "Server error", {}, error));
   }
-
 };

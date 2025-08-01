@@ -8,7 +8,7 @@ import { uploadRoutes } from './upload'
 import InquiryRouter from './Inquiries'
 import orderRouter from './order'
 import { downloadContact } from './contact'
-
+import { adminJWT } from '../helper/jwt'
 
 const router = Router()
 // admin 
@@ -16,14 +16,13 @@ router.use('/admin', adminRouter);
 
 // users
 router.use('/users', usersRouter);
+router.use('/contact', downloadContact);
 
-
-// website page
+router.use(adminJWT)
 router.use('/banner', bannerRouter);
-router.use('/upload', uploadRoutes)
 router.use('/product', productRouter);
 router.use('/inquiry', InquiryRouter);
 router.use('/order', orderRouter);
-router.use('/contact', downloadContact);
 
+router.use('/upload', uploadRoutes)
 export { router }

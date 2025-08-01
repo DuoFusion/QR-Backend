@@ -6,10 +6,10 @@ import { bannerController } from '../controllers';
 const router = express.Router();
 
 router.post('/add', bannerController.addBanner);
-router.put('/update', bannerController.updateBanner);
-router.get('/get/:id', bannerController.getBannerById);
-router.get('/getall', bannerController.getAllBanners);
+router.post('/update', bannerController.updateBanner);
+router.get('/:BannerId', bannerController.getBannerById);
+router.get('/', bannerController.getAllBanner);
 
-router.delete('/delete/:id', bannerController.deleteBannerById);
+router.delete('/delete/:BannerId', bannerController.deleteBannerById);
 
 export default router;

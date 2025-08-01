@@ -11,7 +11,7 @@ const router = Router();
 router.post("", (req: any, res: any) => {
     try {
         let file = req.file
-        let imageUrl = config.BACKEND_URL + `/images/${file.filename}`;
+        let imageUrl = config.BACKEND_URL + `/uploads/${file.filename}`;
         return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess("Image"), imageUrl, {}));
     } catch (error) {
         console.log(error)
@@ -23,13 +23,13 @@ router.delete("/", (req: any, res: any) => {
     try {
         const { imageUrl } = req.body;
         if (!imageUrl) return res.status(400).json(new apiResponse(400, "Image URL is required", {}, {}));
-        
+
         const parsedUrl = url.parse(imageUrl);
         const filename = path.basename(parsedUrl.pathname || "");
 
         if (!filename) return res.status(400).json(new apiResponse(400, "Invalid image URL", {}, {}));
 
-        const imagePath = path.join(process.cwd(), "images", filename);
+        const imagePath = path.join(process.cwd(), "uploads", filename);
 
         if (!fs.existsSync(imagePath)) return res.status(404).json(new apiResponse(404, "Image not found", {}, {}));
 

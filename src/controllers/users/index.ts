@@ -4,29 +4,34 @@ import { apiResponse } from "../../common";
 import { Request, Response } from "express";
 import { countData, getData, responseMessage } from "../../helper";
 import { ADMIN_ROLES } from "../../common";
+import bcrypt from 'bcrypt';
 import mongoose from "mongoose";
 import { reqInfo } from "../../helper/winston_logger";
+import { object } from "joi";
 
-const ObjectId = mongoose.Types.ObjectId;
+let ObjectId = require("mongoose").Types.ObjectId;
 
-export const add_user = async (req: Request, res: Response) => {
+export const add_user = async (req, res) => {
+  reqInfo(req)
   try {
     const body = req.body;
 
     const userEmail = await userModel.findOne({ email: body.email, isDeleted: false });
     if (userEmail) {
-      return res.status(409).json(
-        new apiResponse(409, responseMessage?.alreadyEmail || "Email already registered", {}, {})
+      return res.status(409).json(new apiResponse(409, responseMessage?.alreadyEmail || "Email already registered", {}, {})
       );
     }
-
     const userPhone = await userModel.findOne({ phoneNumber: body.phoneNumber, isDeleted: false });
     if (userPhone) {
       return res.status(409).json(new apiResponse(409, "Phone number already registered", {}, {}));
     }
-
     if (!body.role) {
       body.role = ADMIN_ROLES.USER;
+    }
+    body.confirmPassword = body.password
+    if (body.password) {
+      const salt = await bcrypt.genSalt(10);
+      body.password = await bcrypt.hash(body.password, salt);
     }
 
     const newUser = new userModel({ ...body });
@@ -48,70 +53,115 @@ export const add_user = async (req: Request, res: Response) => {
 
 
 
-export const update_user = async (req: Request, res: Response) => {
+export const update_user = async (req, res) => {
+  reqInfo(req);
   try {
-    const { id, phoneNumber } = req.body;
-    const updateData = { ...req.body };
+    const { userId, email, phoneNumber, password } = req.body;
 
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json(new apiResponse(400, "Invalid user ID", {}, {}));
-    }
-
-    const existingUser = await userModel.findOne({ _id: new ObjectId(id), isDeleted: false });
-    if (!existingUser) {
+    const user = await userModel.findOne({ _id: new ObjectId(userId), isDeleted: false });
+    if (!user)
       return res.status(404).json(new apiResponse(404, "User not found", {}, {}));
+
+    const role = await userModel.findOne({ name: ADMIN_ROLES.USER, isDeleted: false });
+    const roleId = new ObjectId(role?._id);
+
+    const emailExist = await userModel.findOne({ email, roleId, isDeleted: false, _id: { $ne: user._id } });
+    if (emailExist)
+      return res.status(409).json(new apiResponse(409, responseMessage.dataAlreadyExist("email"), {}, {}));
+
+    const phoneExist = await userModel.findOne({
+      phoneNumber, roleId, isDeleted: false, _id: { $ne: user._id }
+    });
+    if (phoneExist)
+      return res.status(409).json(new apiResponse(409, responseMessage.dataAlreadyExist("phoneNumber"), {}, {}));
+
+    req.body.roleId = roleId;
+    if (password) {
+      const saltRounds = 10;
+      req.body.password = await bcrypt.hash(password, saltRounds);
     }
-    if (phoneNumber) {
-      const duplicatePhone = await userModel.findOne({
-        _id: { $ne: new ObjectId(id) },
-        phoneNumber,
-        isDeleted: false,
-      });
+    const updatedUser = await userModel.findOneAndUpdate({ _id: new ObjectId(userId) }, req.body, { new: true });
 
-      if (duplicatePhone) {
-        return res.status(409).json(
-          new apiResponse(409, "Phone number already in use by another user", {}, {})
-        );
-      }
-    }
+    if (!updatedUser)
+      return res.status(404).json(new apiResponse(404, responseMessage.updateDataError("user"), {}, {}));
 
-    const updatedUser = await userModel.findOneAndUpdate({ _id: new ObjectId(id) },{ $set: updateData },{ new: true });
-
-    return res.status(200).json(
-      new apiResponse(200, "User updated successfully", updatedUser, {})
-    );
-
+    return res.status(200).json(new apiResponse(200, responseMessage.updateDataSuccess("user"), updatedUser, {}));
   } catch (error) {
-    console.error("Update user error:", error);
-    return res.status(500).json(
-      new apiResponse(500, responseMessage?.internalServerError || "Internal Server Error", {}, error)
-    );
+    console.error("Edit User Error:", error);
+    return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
   }
 };
 
 
+export const get_all_users = async (req, res) => {
+  reqInfo(req);
+  try {
+    let { page, limit, search } = req.query as any;
+    const criteria: any = { role: ADMIN_ROLES.USER, isDeleted: false };
+    const options: any = { lean: true, sort: { createdAt: -1 } };
+
+    const userHeader = req.headers?.user ? JSON.parse(req.headers.user as string) : null;
+
+    if (userHeader?.role === ADMIN_ROLES.USER) {
+      criteria._id = new ObjectId(userHeader._id);
+    }
+    if (search) {
+      const regex = new RegExp(search, 'i');
+      criteria.$or = [
+        { firstName: { $regex: regex } },
+        { lastName: { $regex: regex } },
+        { phoneNumber: { $regex: regex } },
+      ];
+    }
+
+    const pageNumber = parseInt(page) || 1;
+    const pageLimit = parseInt(limit) || 10;
+
+    options.skip = (pageNumber - 1) * pageLimit;
+    options.limit = pageLimit;
+
+    const users = await getData(userModel, criteria, {}, options);
+    const totalCount = await countData(userModel, criteria);
+
+    const stateObj = {
+      page: pageNumber,
+      limit: pageLimit,
+      page_limit: Math.ceil(totalCount / pageLimit),
+    };
+
+    return res.status(200).json(
+      new apiResponse(200, responseMessage.getDataSuccess('User'), {
+        user_data: users,
+        totalData: totalCount,
+        state: stateObj
+      }, {})
+    );
+  } catch (error) {
+    console.error("Get All Users Error:", error);
+    return res.status(500).json(
+      new apiResponse(500, responseMessage.internalServerError, {}, error)
+    );
+  }
+};
 
 
 export const delete_user = async (req, res) => {
+  reqInfo(req);
   try {
-    const { id } = req.params;
+    const userId = req.params;
+    const user = await userModel.findOneAndUpdate({ _id: new ObjectId(userId), isDeleted: false }, { isDeleted: true }, { new: true });
+    if (!user) return res.status(404).json(new apiResponse(404, "User not found", {}, {}));
 
-    const user = await userModel.findOne({ _id: id, isDeleted: false });
-    if (!user) { return res.status(404).json(new apiResponse(404, "User not found", {}, {})); }
-
-    await userModel.findOneAndDelete(id, { $set: { isDeleted: true } });
-    return res.status(200).json(new apiResponse(200, "User deleted successfully", {}, {})
-    );
+    return res.status(200).json(new apiResponse(200, "User deleted successfully", user, {}));
   } catch (error) {
-    console.error("Delete user error:", error);
-    return res.status(500).json(
-      new apiResponse(500, responseMessage?.internalServerError || "Internal Server Error", {}, error)
-    );
+    console.log(error);
+    return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
   }
 };
 
 
-export const getUserById = async (req: Request, res: Response) => {
+export const getUserById = async (req, res) => {
+  reqInfo(req)
   try {
     const { id } = req.params;
     const user = await userModel.findOne({ _id: id, isDeleted: false });
@@ -127,70 +177,3 @@ export const getUserById = async (req: Request, res: Response) => {
   }
 };
 
-
-export const get_all_users = async (req: Request, res: Response) => {
-  reqInfo(req);
-
-  let { page, limit, search } = req.query as any;
-  let criteria: any = {};
-  let options: any = { lean: true };
-  const userHeader = req.headers?.user ? JSON.parse(req.headers.user as string) : null;
-
-  try {
-
-    if (userHeader?.role === ADMIN_ROLES.USER) {
-      criteria._id = new ObjectId(userHeader?._id);
-    }
-
-
-    if (search) {
-      criteria.$or = [
-        { firstName: { $regex: search, $options: "si" } },
-        { lastName: { $regex: search, $options: "si" } },
-        { email: { $regex: search, $options: "si" } },
-        { phoneNumber: { $regex: search, $options: "si" } },
-        { type: { $regex: search, $options: "si" } }
-      ];
-    }
-
-    criteria.role = ADMIN_ROLES.USER;
-    criteria.isDeleted = false;
-
-    options.sort = { createdAt: -1 };
-    if (page && limit) {
-      options.skip = (parseInt(page) - 1) * parseInt(limit);
-      options.limit = parseInt(limit);
-    }
-    const response = await getData(userModel, criteria, {}, options);
-    const totalCount = await countData(userModel, criteria);
-
-    // Pagination object
-    const stateObj = {
-      page: parseInt(page) || 1,
-      limit: parseInt(limit) || totalCount,
-      page_limit: Math.ceil(totalCount / (parseInt(limit) || totalCount)) || 1,
-    };
-
-    return res.status(200).json(
-      new apiResponse(200, responseMessage.getDataSuccess("User"), {
-        user_data: response,
-        totalData: totalCount,
-        state: stateObj,
-      }, {})
-    );
-  } catch (error) {
-    console.error("Get All Users Error:", error);
-    return res
-      .status(500)
-      .json(new apiResponse(500, responseMessage.internalServerError, {}, {}));
-  }
-};
-
-export const get_QR_code = async(req, res) => {
-  try {
-
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(new apiResponse(500, responseMessage?.internalServerError, {}, {}))
-  }
-}
