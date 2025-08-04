@@ -1,13 +1,9 @@
-import QRCode from "qrcode";
 import { userModel } from "../../database/models/users";
 import { apiResponse } from "../../common";
-import { Request, Response } from "express";
 import { countData, getData, responseMessage } from "../../helper";
 import { ADMIN_ROLES } from "../../common";
 import bcrypt from 'bcrypt';
-import mongoose from "mongoose";
 import { reqInfo } from "../../helper/winston_logger";
-import { object } from "joi";
 
 let ObjectId = require("mongoose").Types.ObjectId;
 
@@ -15,7 +11,6 @@ export const add_user = async (req, res) => {
   reqInfo(req)
   try {
     const body = req.body;
-
     const userEmail = await userModel.findOne({ email: body.email, isDeleted: false });
     if (userEmail) {
       return res.status(409).json(new apiResponse(409, responseMessage?.alreadyEmail || "Email already registered", {}, {})
@@ -33,7 +28,6 @@ export const add_user = async (req, res) => {
       const salt = await bcrypt.genSalt(10);
       body.password = await bcrypt.hash(body.password, salt);
     }
-
     const newUser = new userModel({ ...body });
     const result = await newUser.save();
 
