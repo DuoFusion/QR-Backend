@@ -15,7 +15,6 @@ export const adminJWT = async (req, res, next) => {
         try {
             let isVerifyToken = jwt.verify(authorization, jwt_token_secret)
             result = await userModel.findOne({ _id: new ObjectId(isVerifyToken._id), isDeleted: false }).lean()
-            // console.log("result => ",result)
             if (result?.isBlocked == true) return res.status(410).json(new apiResponse(410, responseMessage?.accountBlock, {}, {}));
             if (result?.isDeleted == false) {
                 req.headers.user = result
