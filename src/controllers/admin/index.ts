@@ -9,6 +9,7 @@ import { reqInfo } from "../../helper/winston_logger";
 import { config } from "../../../config";
 
 const JWT_TOKEN_SECRET = config.JWT_TOKEN_SECRET || "yourSecretKey";
+
 export const signUp = async (req, res) => {
   reqInfo(req);
   try {
@@ -50,7 +51,7 @@ export const login = async (req, res) => {
     if (user.isBlocked) {
       return res.status(403).json(new apiResponse(403, 'Your account is blocked', {}, {}));
     }
-    
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(400).json(new apiResponse(400, "Invalid password", {}, {}));
@@ -81,8 +82,6 @@ export const login = async (req, res) => {
     return res.status(500).json(new apiResponse(500, responseMessage?.internalServerError || "Internal server error", {}, error));
   }
 };
-
-
 
 
 
@@ -125,7 +124,6 @@ export const verify_otp = async (req, res) => {
   reqInfo(req);
   try {
     const { email, otp } = req.body;
-
     const user = await userModel.findOne({ email, isDeleted: false });
     if (!user || user.otp !== Number(otp)) {
       return res.status(400).json(new apiResponse(400, responseMessage?.invalidOTP, {}, {}));
@@ -145,7 +143,7 @@ export const verify_otp = async (req, res) => {
 export const reset_password = async (req, res) => {
   reqInfo(req);
   try {
-    const { email, otp, newpassword } = req.body;
+    const { email, newpassword } = req.body;
 
     const user = await userModel.findOne({ email, isDeleted: false });
 
