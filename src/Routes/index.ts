@@ -11,12 +11,9 @@ import { downloadContact } from './contact'
 import { adminJWT } from '../helper/jwt'
 
 const router = Router()
-// admin 
+
 router.use('/admin', adminRouter);
-
-// users
 router.use('/users', usersRouter);
-
 router.use('/banner', bannerRouter);
 router.use('/product', productRouter);
 router.use('/inquiry', InquiryRouter);

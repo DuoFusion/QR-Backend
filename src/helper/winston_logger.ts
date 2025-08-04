@@ -1,5 +1,7 @@
 import winston from 'winston'
 import moment from 'moment-timezone'
+
+
 const timeFormat = moment().format('DD-MM-YYYY hh:mm:ss A')
 const colorizer = winston.format.colorize()
 const timeZone: any = "Asia/Calcutta"
@@ -12,6 +14,7 @@ let logColor: any = {
         debug: "cyan"
     }
 },
+
     name: String = "Q&A"
 winston.addColors(logColor)
 
