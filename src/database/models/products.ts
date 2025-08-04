@@ -3,11 +3,12 @@ import mongoose from "mongoose";
 const productsSchema = new mongoose.Schema({
 
     image: { type: String, required: true },
-    name: { type: String, required: true },
-    description: { type: String, required: true },
-    price: { type: Number, required: true },
-    category: { type: Number },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "user" }
+    name: { type: String },
+    description: { type: String },
+    price: { type: String },
+    category: { type: String },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
+    isDeleted: { type: Boolean, default: false }
 
 }, { timestamps: true, versionKey: false });
 

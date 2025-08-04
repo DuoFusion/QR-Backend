@@ -1,20 +1,19 @@
 import { Request, Response } from "express";
 import { orderModel } from "../../database";
-import { responseMessage } from "../../helper";
+import { countData, getData, responseMessage } from "../../helper";
 import { apiResponse } from "../../common";
 import { ObjectId } from 'mongodb';
+import { reqInfo } from "../../helper/winston_logger";
+
+let ObjectId = require('mongoose').Types.ObjectId;
 
 
-
-export const createOrder = async (req: Request, res: Response) => {
+export const createOrder = async (req, res) => {
+    reqInfo(req)
     try {
-        const { name, email, phone, address, paymentMethod, price } = req.body;
-
-        if (!name || !email || !address || !paymentMethod) {
-            return res.status(400).json({ success: false, message: "Required fields are missing" });
-        }
-        const newOrder = await orderModel.create({ name, email, phone, address, paymentMethod, price });
-        return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess('Order successfully'), newOrder, {}));
+        const body = req.body;
+        const addorder = await orderModel.create(body);
+        return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess('Order successfully'), addorder, {}));
     } catch (error) {
         return res.status(500).json({ success: false, message: responseMessage?.internalServerError, error });
     }
@@ -22,67 +21,84 @@ export const createOrder = async (req: Request, res: Response) => {
 
 
 export const updateOrder = async (req, res) => {
+    reqInfo(req)
+    const { orderId } = req.body;
+    const body = req.body;
     try {
-        const updatedOrder = await orderModel.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true });
+        const updatedOrder = await orderModel.findOneAndUpdate({ _id: new ObjectId(orderId) }, body, { new: true });
         if (!updatedOrder) {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
         res.status(200).json(
-            new apiResponse(200, responseMessage.updateDataSuccess("Order updated"), updatedOrder, {})
-        );
+            new apiResponse(200, responseMessage.updateDataSuccess("Order updated"), updatedOrder, {}));
     } catch (error) {
         return res.status(500).json({ success: false, message: responseMessage?.internalServerError, error });
     }
 };
 
 
-
-export const getAllOrders = async (req: Request, res: Response) => {
+export const getAllOrders = async (req, res) => {
+    reqInfo(req);
     try {
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 10;
-        const skip = (page - 1) * limit;
+        let { search, page, limit } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
+        if (search) {
+            criteria.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { phone: { $regex: search, $options: 'i' } },
+                { price: { $regex: search, $options: 'i' } }
+            ];
+        }
+        const pageNum = parseInt(page) || 1;
+        const limitNum = parseInt(limit) || 10;
 
-        const totalOrders = await orderModel.countDocuments();
-        const totalPages = Math.ceil(totalOrders / limit);
+        if (page && limit) {
+            options.skip = (parseInt(page) - 1) * parseInt(limit);
+            options.limit = parseInt(limit);
+        }
 
-        const orders = await orderModel.find().sort({ createdAt: -1 }).skip(skip).limit(limit);
+        const response = await getData(orderModel, criteria, {}, options);
+        const totalCount = await countData(orderModel, criteria);
 
-        res.status(200).json({
-            success: true, currentPage: page, totalPages, totalOrders, data: orders,
-        });
+        const stateObj = {
+            page: pageNum,
+            limit: limitNum,
+            page_limit: Math.ceil(totalCount / limitNum) || 1,
+        };
+        return res.status(200).json(new apiResponse(200, responseMessage.getDataSuccess('order'), { order_data: response, totalData: totalCount, state: stateObj }, {}));
     } catch (error) {
-        return res.status(500).json({ success: false, message: responseMessage?.internalServerError, error });
+        console.log(error);
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
 };
 
 
 export const getOrderById = async (req: Request, res: Response) => {
+    reqInfo(req)
     try {
-        const { id } = req.params;
-        const order = await orderModel.findOne({ _id: id });
+        const { orderId } = req.params;
+        const order = await orderModel.findOne({ _id: new ObjectId(orderId) });
         if (!order) return res.status(404).json({ success: false, message: "Order not found" });
-        res.status(200).json({ success: true, data: order });
+        return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess('Order successfully'), order, {}));
     } catch (error) {
-        return res.status(500).json({ success: false, message: responseMessage?.internalServerError, error });
+        console.log(error);
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
 };
 
 
 export const deleteOrder = async (req: Request, res: Response) => {
+    reqInfo(req)
     try {
-        const { id } = req.params;
-        // const objectId = new ObjectId(id)
-        const deletedOrder = await orderModel.findOneAndDelete({ _id: id });
-
+        const { orderId } = req.params;
+        const deletedOrder = await orderModel.findOneAndUpdate({ _id: new ObjectId(orderId), isDeleted: false }, { isDeleted: true }, { new: true });
         if (!deletedOrder) {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
-        return res.status(200).json({ success: true, message: "Order deleted successfully", data: deletedOrder });
+        return res.status(200).json(new apiResponse(200, responseMessage.deleteDataSuccess('Order successfully'), deletedOrder, {}));
     } catch (error) {
-        return res.status(500).json({
-            success: false, message: responseMessage?.internalServerError, error
-        });
+        console.log(error);
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
 };
 

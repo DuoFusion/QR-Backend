@@ -17,22 +17,21 @@ export const addBanner = async (req, res) => {
     const user = await userModel.findOne({ _id: new ObjectId(body.userId), isDeleted: false });
     if (!user) return res.status(404).json(new apiResponse(404, responseMessage?.getDataNotFound("user"), {}, {}));
 
-    if (user && user.link) {
-      const qrCodeBase64 = await QRCode.toDataURL(user.link);
+    if (body.link) {
+      const qrCodeBase64 = await QRCode.toDataURL(body.link);
       const base64Data = qrCodeBase64.replace(/^data:image\/png;base64,/, "");
-
       const fileName = `qr_${Date.now()}.png`;
       const uploadDir = path.join(__dirname, "../../../../uploads");
       const filePath = path.join(uploadDir, fileName);
-    
+
       fs.mkdirSync(uploadDir, { recursive: true });
       fs.writeFileSync(filePath, base64Data, "base64");
-      
+
       const publicUrl = `${config.BACKEND_URL}/uploads/${fileName}`;
       body.qrCode = publicUrl;
     }
     const response = await bannerModel.create(body);
-    
+
     return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess('Banner data is successfully'), response, {}));
   } catch (error) {
     console.error(error);
@@ -40,54 +39,42 @@ export const addBanner = async (req, res) => {
   }
 };
 
-export const updateBanner = async (req, res) => {
-  reqInfo(req)
+export const updateBanner = async (req: Request, res: Response) => {
+  reqInfo(req);
   try {
-    const { BannerId, userId, qrCode, ...body } = req.body;
+    const { BannerId, ...body } = req.body;
 
     if (!BannerId) {
       return res.status(400).json(new apiResponse(400, "Banner ID is required", {}, {}));
     }
 
-    let isExist = await bannerModel.findOne({ _id: new ObjectId(BannerId), isDeleted: false });
+    const isExist = await bannerModel.findOne({ _id: new ObjectId(BannerId), isDeleted: false });
     if (!isExist) {
-      return res.status(404).json(new apiResponse(404, responseMessage?.getDataNotFound("Banner"), {}, {}));
+      return res.status(404).json(new apiResponse(404, responseMessage.getDataNotFound("Banner"), {}, {}));
     }
 
-    if (userId) {
-      let newUser = await userModel.findOne({ _id: new ObjectId(userId), isDeleted: false });
-      if (!newUser) {
-        return res.status(404).json(new apiResponse(404, responseMessage?.getDataNotFound("user"), {}, {}));
+    if (body.link) {
+      // Delete old QR file
+      const oldFileNameMatch = isExist.qrCode?.match(/qr_(\d+)\.png/);
+      if (oldFileNameMatch) {
+        const oldFileName = `qr_${oldFileNameMatch[1]}.png`;
+        const oldFilePath = path.join(__dirname, "../../../../uploads", oldFileName);
+        if (fs.existsSync(oldFilePath)) fs.unlinkSync(oldFilePath);
       }
 
-      let existingUser = await userModel.findOne({ _id: new ObjectId(isExist.userId), isDeleted: false });
-      if (!existingUser) {
-        return res.status(404).json(new apiResponse(404, responseMessage?.getDataNotFound("user"), {}, {}));
-      }
+      // Generate new QR code
+      const qrCodeBase64 = await QRCode.toDataURL(body.link);
+      const base64Data = qrCodeBase64.replace(/^data:image\/png;base64,/, "");
 
-      if (newUser.link) {
-        if (isExist.qrCode && isExist.qrCode.startsWith("data:image")) {
-          const oldFileNameMatch = isExist.qrCode.match(/qr_(\d+)\.png/);
-          if (oldFileNameMatch) {
-            const oldFileName = `qr_${oldFileNameMatch[1]}.png`;
-            const oldFilePath = path.join(__dirname, "../../../uploads", oldFileName);
-            if (fs.existsSync(oldFilePath)) {
-              fs.unlinkSync(oldFilePath);
-            }
-          }
-        }
+      const fileName = `qr_${Date.now()}.png`;
+      const filePath = path.join(__dirname, "../../../../uploads", fileName);
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      fs.writeFileSync(filePath, base64Data, "base64");
 
-        const qrCodeBase64 = await QRCode.toDataURL(newUser.link);
-        const base64Data = qrCodeBase64.replace(/^data:image\/png;base64,/, "");
-
-        const fileName = `qr_${Date.now()}.png`;
-        const filePath = path.join(__dirname, "../../../uploads", fileName);
-        fs.mkdirSync(path.dirname(filePath), { recursive: true });
-        fs.writeFileSync(filePath, base64Data, "base64");
-
-        body.qrCode = qrCodeBase64;
-      }
+      const publicUrl = `${config.BACKEND_URL}/uploads/${fileName}`;
+      body.qrCode = publicUrl;
     }
+
     const response = await updateData(bannerModel, { _id: new ObjectId(BannerId) }, body, {});
     if (!response) {
       return res.status(404).json(new apiResponse(404, "Banner not found", {}, {}));
@@ -95,6 +82,7 @@ export const updateBanner = async (req, res) => {
 
     return res.status(200).json(new apiResponse(200, responseMessage.updateDataSuccess("Banner data is updated"), response, {}));
   } catch (error) {
+    console.error(error);
     return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
   }
 };
@@ -119,11 +107,15 @@ export const getAllBanner = async (req, res) => {
   try {
     let { search, page, limit } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
     if (search) {
-      criteria.title = { $regex: search, $options: 'si' };
+      criteria.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phoneNumber: { $regex: search, $options: 'i' } }
+      ];
     }
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 1;
-    options.sort = { createdAt: -1 };;
 
     if (page && limit) {
       options.skip = (parseInt(page) - 1) * parseInt(limit);
