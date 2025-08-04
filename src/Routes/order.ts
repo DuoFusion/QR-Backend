@@ -1,14 +1,17 @@
 import express from "express";
 import { orderController } from "../controllers";
+import { adminJWT } from "../helper/jwt";
 
 const router = express.Router();
 
 // Routes
-router.post("/add", orderController.createOrder);
-router.post("/update", orderController.updateOrder);
-router.delete("/delete/:orderId", orderController.deleteOrder);
 
 router.get("/", orderController.getAllOrders);
 router.get("/:orderId", orderController.getOrderById);
+
+router.use(adminJWT)
+router.post("/add", orderController.addOrder);
+router.post("/update", orderController.updateOrder);
+router.delete("/delete/:orderId", orderController.deleteOrder);
 
 export default router

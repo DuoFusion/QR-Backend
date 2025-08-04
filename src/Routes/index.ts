@@ -16,13 +16,13 @@ router.use('/admin', adminRouter);
 
 // users
 router.use('/users', usersRouter);
-router.use('/contact', downloadContact);
 
-router.use(adminJWT)
 router.use('/banner', bannerRouter);
 router.use('/product', productRouter);
 router.use('/inquiry', InquiryRouter);
 router.use('/order', orderRouter);
+router.use('/contact', downloadContact);
 
+router.use(adminJWT)
 router.use('/upload', uploadRoutes)
 export { router }

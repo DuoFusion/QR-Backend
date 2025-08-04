@@ -8,7 +8,7 @@ import { reqInfo } from "../../helper/winston_logger";
 let ObjectId = require('mongoose').Types.ObjectId;
 
 
-export const createOrder = async (req, res) => {
+export const addOrder = async (req, res) => {
     reqInfo(req)
     try {
         const body = req.body;
