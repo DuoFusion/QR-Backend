@@ -22,10 +22,10 @@ export const createOrder = async (req, res) => {
 
 export const updateOrder = async (req, res) => {
     reqInfo(req)
-    const { orderId } = req.body;
-    const body = req.body;
     try {
-        const updatedOrder = await orderModel.findOneAndUpdate({ _id: new ObjectId(orderId) }, body, { new: true });
+        const { orderId } = req.body;
+        const body = req.body;
+        const updatedOrder = await orderModel.findOneAndUpdate({ _id: new ObjectId(orderId), isDeleted: false }, body, { new: true });
         if (!updatedOrder) {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
@@ -73,11 +73,11 @@ export const getAllOrders = async (req, res) => {
 };
 
 
-export const getOrderById = async (req: Request, res: Response) => {
+export const getOrderById = async (req, res) => {
     reqInfo(req)
     try {
         const { orderId } = req.params;
-        const order = await orderModel.findOne({ _id: new ObjectId(orderId) });
+        const order = await orderModel.findOne({ _id: new ObjectId(orderId), isDeleted: false });
         if (!order) return res.status(404).json({ success: false, message: "Order not found" });
         return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess('Order successfully'), order, {}));
     } catch (error) {

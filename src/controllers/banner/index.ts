@@ -92,7 +92,7 @@ export const getBannerById = async (req, res) => {
   reqInfo(req)
   try {
     const { BannerId } = req.params;
-    const banner = await bannerModel.findOne({ _id: new ObjectId(BannerId) });
+    const banner = await bannerModel.findOne({ _id: new ObjectId(BannerId) ,isDeleted:false});
     if (!banner) {
       return res.status(404).json({ success: false, message: "Banner not found", });
     }
@@ -140,9 +140,9 @@ export const getAllBanner = async (req, res) => {
 
 
 export const deleteBannerById = async (req, res) => {
+  reqInfo(req)
   try {
     const { BannerId } = req.params;
-
     const deletedBanner = await bannerModel.findOneAndUpdate({ _id: new ObjectId(BannerId), isDeleted: false },
       { isDeleted: true, deletedAt: new Date() }, { new: true }
     );

@@ -9,8 +9,6 @@ import { reqInfo } from "../../helper/winston_logger";
 import { config } from "../../../config";
 
 const JWT_TOKEN_SECRET = config.JWT_TOKEN_SECRET || "yourSecretKey";
-const TOKEN_EXPIRE = "1d";
-
 export const signUp = async (req, res) => {
   reqInfo(req);
   try {

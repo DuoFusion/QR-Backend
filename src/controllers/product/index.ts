@@ -9,8 +9,8 @@ let ObjectId = require('mongoose').Types.ObjectId;
 
 export const addProduct = async (req, res) => {
   reqInfo(req)
-  const body = req.body;
   try {
+    const body = req.body;
     const response = await productModel.create(body);
     return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess('Product added successfully!'), response, {}));
   } catch (error) {
@@ -25,7 +25,7 @@ export const updateProductById = async (req, res) => {
   try {
     const { productId } = req.body;
     const body = req.body;
-    const updatedProduct = await productModel.findOneAndUpdate({ _id: new ObjectId(productId) }, body, { new: true });
+    const updatedProduct = await productModel.findOneAndUpdate({ _id: new ObjectId(productId), isDeleted: false }, body, { new: true });
     if (!updatedProduct) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
@@ -56,22 +56,6 @@ export const getProductById = async (req, res) => {
 
 
 
-export const deleteProductById = async (req, res) => {
-  reqInfo(req)
-  try {
-    const { productId } = req.params;
-
-    const deletedproduct = await productModel.findOneAndUpdate({ _id: new ObjectId(productId), isDeleted: false },
-      { isDeleted: true, deletedAt: new Date() }, { new: true }
-    );
-    if (!deletedproduct) {
-      return res.status(404).json({ success: false, message: "product not found or already deleted", });
-    }
-    return res.status(200).json(new apiResponse(200, responseMessage.deleteDataSuccess("product"), deletedproduct, {}));
-  } catch (error) {
-    return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
-  }
-};
 
 
 export const get_all_users = async (req, res) => {
@@ -107,6 +91,24 @@ export const get_all_users = async (req, res) => {
     return res.status(200).json(new apiResponse(200, responseMessage.getDataSuccess('product'), { product_data: response, totalData: totalCount, state: stateObj }, {}));
   } catch (error) {
     console.log(error);
+    return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+  }
+};
+
+
+export const deleteProductById = async (req, res) => {
+  reqInfo(req)
+  try {
+    const { productId } = req.params;
+
+    const deletedproduct = await productModel.findOneAndUpdate({ _id: new ObjectId(productId), isDeleted: false },
+      { isDeleted: true, deletedAt: new Date() }, { new: true }
+    );
+    if (!deletedproduct) {
+      return res.status(404).json({ success: false, message: "product not found or already deleted", });
+    }
+    return res.status(200).json(new apiResponse(200, responseMessage.deleteDataSuccess("product"), deletedproduct, {}));
+  } catch (error) {
     return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
   }
 };

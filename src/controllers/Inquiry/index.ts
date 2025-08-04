@@ -7,6 +7,7 @@ import { reqInfo } from "../../helper/winston_logger";
 let ObjectId = require('mongoose').Types.ObjectId;
 
 export const addInquiry = async (req, res) => {
+    reqInfo(req)
     try {
         const body = req.body;
         const newInquiry = await InquiriesModel.create(body);
@@ -80,6 +81,7 @@ export const getAllInquiries = async (req, res) => {
 
 
 export const deleteInquiry = async (req, res) => {
+    reqInfo(req)
     try {
         const { InquiryId } = req.params;
         const inquiry = await InquiriesModel.findOneAndUpdate({ _id: new ObjectId(InquiryId), isDeleted: false }, { isDeleted: true }, { new: true });

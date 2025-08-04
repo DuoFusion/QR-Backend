@@ -148,7 +148,7 @@ export const get_all_users = async (req, res) => {
 export const delete_user = async (req, res) => {
   reqInfo(req);
   try {
-    const userId = req.params;
+    const { userId } = req.params;
     const user = await userModel.findOneAndUpdate({ _id: new ObjectId(userId), isDeleted: false }, { isDeleted: true }, { new: true });
     if (!user) return res.status(404).json(new apiResponse(404, "User not found", {}, {}));
 
@@ -163,8 +163,8 @@ export const delete_user = async (req, res) => {
 export const getUserById = async (req, res) => {
   reqInfo(req)
   try {
-    const { id } = req.params;
-    const user = await userModel.findOne({ _id: id, isDeleted: false });
+    const { userId } = req.params;
+    const user = await userModel.findOne({ _id: new ObjectId(userId), isDeleted: false });
     if (!user) {
       return res.status(404).json(new apiResponse(404, "User not found", {}, {}));
     }
