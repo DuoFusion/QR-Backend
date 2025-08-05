@@ -180,3 +180,38 @@ export const reset_password = async (req, res) => {
     return res.status(500).json(new apiResponse(500, "Server error", {}, error));
   }
 };
+
+
+
+export const change_password = async (req, res) => {
+  reqInfo(req);
+  try {
+    const { email, oldPassword, newPassword, confirmPassword } = req.body;
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json(new apiResponse(404, "Email not found.", {}, {}));
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json(new apiResponse(400, "Old password is incorrect.", {}, {}));
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json(new apiResponse(400, "New password and confirm password do not match.", {}, {}));
+    }
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+    user.confirmPassword = req.body.confirmPassword;
+
+
+    await user.save();
+
+    return res.status(200).json(new apiResponse(200, "Password changed successfully.", {}, {}));
+  } catch (error) {
+    console.error("Change password error:", error);
+    return res.status(500).json(new apiResponse(500, responseMessage?.internalServerError || "Internal Server Error", {}, error));
+  }
+};
+
