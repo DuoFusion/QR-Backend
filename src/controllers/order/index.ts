@@ -19,7 +19,6 @@ export const addOrder = async (req, res) => {
     }
 };
 
-
 export const updateOrder = async (req, res) => {
     reqInfo(req)
     try {

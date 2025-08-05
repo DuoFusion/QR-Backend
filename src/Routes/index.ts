@@ -12,7 +12,7 @@ import { adminJWT } from '../helper/jwt'
 
 const router = Router()
 
-router.use('/admin', adminRouter);
+router.use('/auth', adminRouter);
 router.use('/users', usersRouter);
 router.use('/banner', bannerRouter);
 router.use('/product', productRouter);

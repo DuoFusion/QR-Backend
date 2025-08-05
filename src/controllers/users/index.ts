@@ -45,8 +45,6 @@ export const add_user = async (req, res) => {
   }
 };
 
-
-
 export const update_user = async (req, res) => {
   reqInfo(req);
   try {
@@ -68,14 +66,12 @@ export const update_user = async (req, res) => {
     });
     if (phoneExist)
       return res.status(409).json(new apiResponse(409, responseMessage.dataAlreadyExist("phoneNumber"), {}, {}));
-
     req.body.roleId = roleId;
     if (password) {
       const saltRounds = 10;
       req.body.password = await bcrypt.hash(password, saltRounds);
     }
     const updatedUser = await userModel.findOneAndUpdate({ _id: new ObjectId(userId) }, req.body, { new: true });
-
     if (!updatedUser)
       return res.status(404).json(new apiResponse(404, responseMessage.updateDataError("user"), {}, {}));
 
@@ -85,7 +81,6 @@ export const update_user = async (req, res) => {
     return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
   }
 };
-
 
 export const get_all_users = async (req, res) => {
   reqInfo(req);
