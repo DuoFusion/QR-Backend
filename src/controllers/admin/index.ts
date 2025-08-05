@@ -15,7 +15,6 @@ export const signUp = async (req, res) => {
   try {
     const body = req.body;
     let existingUser = await userModel.findOne({ email: body?.email, isDeleted: false });
-
     if (existingUser)
       return res.status(409).json(new apiResponse(409, responseMessage?.alreadyEmail || "Email already exists", {}, {}));
 
@@ -180,7 +179,6 @@ export const reset_password = async (req, res) => {
     return res.status(500).json(new apiResponse(500, "Server error", {}, error));
   }
 };
-
 
 
 export const change_password = async (req, res) => {

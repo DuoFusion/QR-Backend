@@ -12,7 +12,7 @@ router.post('/forgot_password', adminController.forgot_password);
 router.post('/verify_otp', adminController.verify_otp);
 router.post('/reset_password', adminController.reset_password);
 
-router.use(adminJWT);
+router.use(adminJWT)
 router.post('/change-password', adminController.change_password)
 
 export default router;
