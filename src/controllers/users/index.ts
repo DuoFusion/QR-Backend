@@ -8,40 +8,37 @@ import { reqInfo } from "../../helper/winston_logger";
 let ObjectId = require("mongoose").Types.ObjectId;
 
 export const add_user = async (req, res) => {
-  reqInfo(req)
+  reqInfo(req);
   try {
     const body = req.body;
-    const userEmail = await userModel.findOne({ email: body.email, isDeleted: false }).sort({createdAt:-1});
-    if (userEmail) {
-      return res.status(409).json(new apiResponse(409, responseMessage?.alreadyEmail || "Email already registered", {}, {})
-      );
-    }
-    const userPhone = await userModel.findOne({ phoneNumber: body.phoneNumber, isDeleted: false });
-    if (userPhone) {
-      return res.status(409).json(new apiResponse(409, "Phone number already registered", {}, {}));
-    }
-    if (!body.role) {
-      body.role = ADMIN_ROLES.USER;
-    }
-    body.confirmPassword = body.password
-    if (body.password) {
-      const salt = await bcrypt.genSalt(10);
-      body.password = await bcrypt.hash(body.password, salt);
-    }
-    const newUser = new userModel({ ...body });
-    const result = await newUser.save();
 
-    const responseData = {
-      userType: body.role,
-      ...result.toObject(),
-    };
+    const existingEmail = await userModel.findOne({ email: body.email, isDeleted: false });
+    if (existingEmail)
+      return res.status(409).json(new apiResponse(409, responseMessage.dataAlreadyExist("email"), {}, {}));
 
-    return res.status(200).json(new apiResponse(200, "User added successfully", responseData, {}));
+    const existingPhone = await userModel.findOne({ phoneNumber: body.phoneNumber, isDeleted: false });
+    if (existingPhone)
+      return res.status(409).json(new apiResponse(409, responseMessage.dataAlreadyExist("phoneNumber"), {}, {}));
+
+    req.body.confirmPassword = req.body.password;
+
+
+    const saltRounds = 10;
+    body.password = await bcrypt.hash(body.password, saltRounds);
+
+    // Ensure confirmPassword matches password
+
+    body.role = ADMIN_ROLES.USER;
+
+    const user = await new userModel(body).save();
+    console.log("User added successfully:", user);
+    if (!user)
+      return res.status(500).json(new apiResponse(500, responseMessage.addDataError, {}, {}));
+
+    return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess("user"), user, {}));
   } catch (error) {
-    console.error("Add user error:", error);
-    return res.status(500).json(
-      new apiResponse(500, responseMessage?.internalServerError || "Internal server error", {}, error)
-    );
+    console.error("Add User Error:", error);
+    return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
   }
 };
 
