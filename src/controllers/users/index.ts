@@ -78,13 +78,12 @@ export const update_user = async (req, res) => {
   }
 };
 
-
 export const get_all_users = async (req, res) => {
   reqInfo(req);
   try {
     let { search, page, limit } = req.query,
       options: any = { lean: true },
-      criteria: any = { isDeleted: false };
+      criteria: any = { isDeleted: false, role: ADMIN_ROLES.USER };
 
     if (search) {
       criteria.$or = [
@@ -101,6 +100,7 @@ export const get_all_users = async (req, res) => {
       options.skip = (parseInt(page) - 1) * parseInt(limit);
       options.limit = parseInt(limit);
     }
+
     const response = await getData(userModel, criteria, {}, { ...options, sort: { createdAt: -1 } });
 
     const totalCount = await countData(userModel, criteria);
