@@ -9,7 +9,7 @@ export const sendEmail = async (to: string, subject: string, text: string) => {
       pass: process.env.EMAIL_PASS
     }
   });
-
+  
   const mailOptions = {
     from: "your_email@gmail.com",
     to,

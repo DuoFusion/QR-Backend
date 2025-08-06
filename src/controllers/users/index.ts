@@ -11,7 +11,7 @@ export const add_user = async (req, res) => {
   reqInfo(req)
   try {
     const body = req.body;
-    const userEmail = await userModel.findOne({ email: body.email, isDeleted: false });
+    const userEmail = await userModel.findOne({ email: body.email, isDeleted: false }).sort({createdAt:-1});
     if (userEmail) {
       return res.status(409).json(new apiResponse(409, responseMessage?.alreadyEmail || "Email already registered", {}, {})
       );
