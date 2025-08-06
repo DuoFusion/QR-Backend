@@ -6,7 +6,6 @@ import bcrypt from 'bcrypt';
 import { reqInfo } from "../../helper/winston_logger";
 
 let ObjectId = require("mongoose").Types.ObjectId;
-
 export const add_user = async (req, res) => {
   reqInfo(req);
   try {
@@ -79,10 +78,14 @@ export const update_user = async (req, res) => {
   }
 };
 
+
 export const get_all_users = async (req, res) => {
   reqInfo(req);
   try {
-    let { search, page, limit } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
+    let { search, page, limit } = req.query,
+      options: any = { lean: true },
+      criteria: any = { isDeleted: false };
+
     if (search) {
       criteria.$or = [
         { firstName: { $regex: search, $options: 'i' } },
@@ -90,15 +93,16 @@ export const get_all_users = async (req, res) => {
         { phoneNumber: { $regex: search, $options: 'i' } }
       ];
     }
+
     const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 1;
+    const limitNum = parseInt(limit) || 10;
 
     if (page && limit) {
       options.skip = (parseInt(page) - 1) * parseInt(limit);
       options.limit = parseInt(limit);
     }
+    const response = await getData(userModel, criteria, {}, { ...options, sort: { createdAt: -1 } });
 
-    const response = await getData(userModel, criteria, {}, options);
     const totalCount = await countData(userModel, criteria);
 
     const stateObj = {
@@ -107,12 +111,26 @@ export const get_all_users = async (req, res) => {
       page_limit: Math.ceil(totalCount / limitNum) || 1,
     };
 
-    return res.status(200).json(new apiResponse(200, responseMessage.getDataSuccess('Users'), { User_data: response, totalData: totalCount, state: stateObj }, {}));
+    return res.status(200).json(
+      new apiResponse(
+        200,
+        responseMessage.getDataSuccess('Users'),
+        {
+          User_data: response,
+          totalData: totalCount,
+          state: stateObj
+        },
+        {}
+      )
+    );
   } catch (error) {
     console.log(error);
-    return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    return res.status(500).json(
+      new apiResponse(500, responseMessage.internalServerError, {}, error)
+    );
   }
 };
+
 
 
 export const delete_user = async (req, res) => {
