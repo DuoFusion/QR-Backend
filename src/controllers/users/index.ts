@@ -85,51 +85,35 @@ export const update_user = async (req, res) => {
 export const get_all_users = async (req, res) => {
   reqInfo(req);
   try {
-    let { page, limit, search } = req.query as any;
-    const criteria: any = { role: ADMIN_ROLES.USER, isDeleted: false };
-    const options: any = { lean: true, sort: { createdAt: -1 } };
-
-    const userHeader = req.headers?.user ? JSON.parse(req.headers.user as string) : null;
-
-    if (userHeader?.role === ADMIN_ROLES.USER) {
-      criteria._id = new ObjectId(userHeader._id);
-    }
+    let { search, page, limit } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
     if (search) {
-      const regex = new RegExp(search, 'i');
       criteria.$or = [
-        { firstName: { $regex: regex } },
-        { lastName: { $regex: regex } },
-        { phoneNumber: { $regex: regex } },
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { phoneNumber: { $regex: search, $options: 'i' } }
       ];
     }
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 1;
 
-    const pageNumber = parseInt(page) || 1;
-    const pageLimit = parseInt(limit) || 10;
+    if (page && limit) {
+      options.skip = (parseInt(page) - 1) * parseInt(limit);
+      options.limit = parseInt(limit);
+    }
 
-    options.skip = (pageNumber - 1) * pageLimit;
-    options.limit = pageLimit;
-
-    const users = await getData(userModel, criteria, {}, options);
+    const response = await getData(userModel, criteria, {}, options);
     const totalCount = await countData(userModel, criteria);
 
     const stateObj = {
-      page: pageNumber,
-      limit: pageLimit,
-      page_limit: Math.ceil(totalCount / pageLimit),
+      page: pageNum,
+      limit: limitNum,
+      page_limit: Math.ceil(totalCount / limitNum) || 1,
     };
 
-    return res.status(200).json(
-      new apiResponse(200, responseMessage.getDataSuccess('User'), {
-        user_data: users,
-        totalData: totalCount,
-        state: stateObj
-      }, {})
-    );
+    return res.status(200).json(new apiResponse(200, responseMessage.getDataSuccess('Users'), { User_data: response, totalData: totalCount, state: stateObj }, {}));
   } catch (error) {
-    console.error("Get All Users Error:", error);
-    return res.status(500).json(
-      new apiResponse(500, responseMessage.internalServerError, {}, error)
-    );
+    console.log(error);
+    return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
   }
 };
 
