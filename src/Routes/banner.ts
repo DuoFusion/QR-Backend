@@ -7,10 +7,10 @@ import { adminJWT } from '../helper/jwt';
 const router = express.Router();
 
 router.get('/', bannerController.getAllBanner);
-router.get('/:BannerId', bannerController.getBannerById);
+router.get('/:bannerId', bannerController.getBannerById);
     
 router.use(adminJWT)
 router.post('/add', bannerController.addBanner);
 router.post('/update', bannerController.updateBanner);
-router.delete('/delete/:BannerId', bannerController.deleteBannerById);
+router.delete('/delete/:bannerId', bannerController.deleteBannerById);
 export default router;

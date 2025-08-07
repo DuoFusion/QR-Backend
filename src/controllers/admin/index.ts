@@ -124,7 +124,6 @@ export const verify_otp = async (req, res) => {
   try {
     const { email, otp } = req.body;
     const user = await userModel.findOne({ email, isDeleted: false });
-
     if (!user || user.otp !== Number(otp)) {
       return res.status(400).json(new apiResponse(400, responseMessage?.invalidOTP, {}, {}));
     }

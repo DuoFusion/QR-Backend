@@ -42,13 +42,13 @@ export const addBanner = async (req, res) => {
 export const updateBanner = async (req: Request, res: Response) => {
   reqInfo(req);
   try {
-    const { BannerId, ...body } = req.body;
+    const { bannerId, ...body } = req.body;
 
-    if (!BannerId) {
+    if (!bannerId) {
       return res.status(400).json(new apiResponse(400, "Banner ID is required", {}, {}));
     }
 
-    const isExist = await bannerModel.findOne({ _id: new ObjectId(BannerId), isDeleted: false });
+    const isExist = await bannerModel.findOne({ _id: new ObjectId(bannerId), isDeleted: false });
     if (!isExist) {
       return res.status(404).json(new apiResponse(404, responseMessage.getDataNotFound("Banner"), {}, {}));
     }
@@ -75,7 +75,7 @@ export const updateBanner = async (req: Request, res: Response) => {
       body.qrCode = publicUrl;
     }
 
-    const response = await updateData(bannerModel, { _id: new ObjectId(BannerId) }, body, {});
+    const response = await updateData(bannerModel, { _id: new ObjectId(bannerId) }, body, {});
     if (!response) {
       return res.status(404).json(new apiResponse(404, "Banner not found", {}, {}));
     }
@@ -91,8 +91,8 @@ export const updateBanner = async (req: Request, res: Response) => {
 export const getBannerById = async (req, res) => {
   reqInfo(req)
   try {
-    const { BannerId } = req.params;
-    const banner = await bannerModel.findOne({ _id: new ObjectId(BannerId) ,isDeleted:false});
+    const { bannerId } = req.params;
+    const banner = await bannerModel.findOne({ _id: new ObjectId(bannerId) ,isDeleted:false});
     if (!banner) {
       return res.status(404).json({ success: false, message: "Banner not found", });
     }
@@ -142,8 +142,8 @@ export const getAllBanner = async (req, res) => {
 export const deleteBannerById = async (req, res) => {
   reqInfo(req)
   try {
-    const { BannerId } = req.params;
-    const deletedBanner = await bannerModel.findOneAndUpdate({ _id: new ObjectId(BannerId), isDeleted: false },
+    const { bannerId } = req.params;
+    const deletedBanner = await bannerModel.findOneAndUpdate({ _id: new ObjectId(bannerId), isDeleted: false },
       { isDeleted: true, deletedAt: new Date() }, { new: true }
     );
     if (!deletedBanner) {
