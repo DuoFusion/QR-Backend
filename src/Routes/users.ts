@@ -14,3 +14,4 @@ router.delete('/delete/:userId', usersController.delete_user);
 router.get('/', usersController.get_all_users);
 
 export default router;
+    
