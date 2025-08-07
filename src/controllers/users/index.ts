@@ -67,8 +67,6 @@ export const update_user = async (req, res) => {
       const saltRounds = 10;
       req.body.password = await bcrypt.hash(password, saltRounds);
           // req.body.confirmPassword = req.body.password;
-
-
     }
     const updatedUser = await userModel.findOneAndUpdate({ _id: new ObjectId(userId) }, req.body, { new: true });
     if (!updatedUser)
