@@ -7,11 +7,11 @@ const router = express.Router();
 // Routes
 
 router.get("/",InquiryController.getAllInquiries);
-router.get("/:InquiryId",InquiryController.getInquiryById);
+router.get("/:inquiryId",InquiryController.getInquiryById);
 
 router.use(adminJWT)
 router.post("/add",InquiryController.addInquiry);
 router.post("/update",InquiryController.updateInquiry);
-router.delete("/delete/:InquiryId",InquiryController.deleteInquiry);
+router.delete("/delete/:inquiryId",InquiryController.deleteInquiry);
 
 export default router

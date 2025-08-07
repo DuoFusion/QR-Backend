@@ -20,9 +20,9 @@ export const addInquiry = async (req, res) => {
 export const updateInquiry = async (req, res) => {
     reqInfo(req)
     try {
-        const { InquiryId } = req.body;
+        const { inquiryId } = req.body;
         const body = req.body;
-        const updatedInquiry = await InquiriesModel.findOneAndUpdate({ _id: new ObjectId(InquiryId) }, body, { new: true });
+        const updatedInquiry = await InquiriesModel.findOneAndUpdate({ _id: new ObjectId(inquiryId) }, body, { new: true });
         if (!updatedInquiry) { return res.status(404).json({ success: false, message: "Inquiry not found" }); }
         res.status(200).json(new apiResponse(200, responseMessage.updateDataSuccess("inquiry"), updatedInquiry , {}));
     } catch (error: any) {
@@ -32,8 +32,8 @@ export const updateInquiry = async (req, res) => {
 
 export const getInquiryById = async (req, res) => {
     try {
-        const { InquiryId } = req.params;
-        const inquiry = await InquiriesModel.findOne({ _id: new ObjectId(InquiryId) });
+        const { inquiryId } = req.params;
+        const inquiry = await InquiriesModel.findOne({ _id: new ObjectId(inquiryId) });
         if (!inquiry) { return res.status(404).json({ success: false, message: "Inquiry not found", }); }
 
         return res.status(200).json(new apiResponse(200, responseMessage.getDataSuccess("Inquiry"), inquiry, {}));
@@ -83,8 +83,8 @@ export const getAllInquiries = async (req, res) => {
 export const deleteInquiry = async (req, res) => {
     reqInfo(req)
     try {
-        const { InquiryId } = req.params;
-        const inquiry = await InquiriesModel.findOneAndUpdate({ _id: new ObjectId(InquiryId), isDeleted: false }, { isDeleted: true }, { new: true });
+        const { inquiryId } = req.params;
+        const inquiry = await InquiriesModel.findOneAndUpdate({ _id: new ObjectId(inquiryId), isDeleted: false }, { isDeleted: true }, { new: true });
         if (!inquiry) {
             return res.status(404).json({ success: false, message: "Inquiry not found or already deleted" });
         }
