@@ -11,7 +11,7 @@ router.get("/:inquiryId",InquiryController.getInquiryById);
 
 router.use(adminJWT)
 router.post("/add",InquiryController.addInquiry);
-router.post("/update",InquiryController.updateInquiry);
+router.post("/edit",InquiryController.updateInquiry);
 router.delete("/delete/:inquiryId",InquiryController.deleteInquiry);
 
 export default router

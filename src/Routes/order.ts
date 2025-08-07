@@ -11,7 +11,7 @@ router.get("/:orderId", orderController.getOrderById);
 
 router.use(adminJWT)
 router.post("/add", orderController.addOrder);
-router.post("/update", orderController.updateOrder);
+router.post("/edit", orderController.updateOrder);
 router.delete("/delete/:orderId", orderController.deleteOrder);
 
 export default router
