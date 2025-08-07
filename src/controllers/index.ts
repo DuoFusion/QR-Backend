@@ -1,4 +1,4 @@
-export * as bannerController from "./banner";
+export * as settingController from "./setting";
 export * as productController from "./product";
 export * as adminController from "./admin";
 export * as usersController from './users';

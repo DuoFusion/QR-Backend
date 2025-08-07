@@ -1,6 +1,6 @@
 "use strict"
 import { Router } from 'express'
-import bannerRouter from './banner'
+import settingRouter from './setting'
 import productRouter from './product'
 import adminRouter from './admin'
 import usersRouter from './users'
@@ -14,7 +14,7 @@ const router = Router()
 
 router.use('/auth', adminRouter);
 router.use('/users', usersRouter);
-router.use('/banner', bannerRouter);
+router.use('/setting', settingRouter);
 router.use('/product', productRouter);
 router.use('/inquiry', InquiryRouter);
 router.use('/order', orderRouter);
