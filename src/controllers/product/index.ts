@@ -57,51 +57,83 @@ export const getProductById = async (req, res) => {
 export const get_all_users = async (req, res) => {
   reqInfo(req);
   try {
-    let { type, search, page, limit } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
+    let { type, search, page, limit, Filter, userId } = req.query;
+    let options: any = { lean: true };
+    let criteria: any = { isDeleted: false };
+
     if (type) criteria.type = type;
-    if (search) {
-      criteria.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { category: { $regex: search, $options: 'i' } },
-        { price: { $regex: search, $options: 'i' } }
-      ];
+
+    if (Filter === 'userId' && userId) {
+      criteria.userId = new ObjectId(userId);
     }
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 10;
-
-
-    if (page && limit) {
-      options.skip = (parseInt(page) - 1) * parseInt(limit);
-      options.limit = parseInt(limit);
-      options.sort = { createdAt: -1 };;
-
+    else if (Filter === 'all') {
     }
-
-    let response = await getData(productModel, criteria, {}, options);
-    response = await productModel.populate(response, { path: 'userId', select: 'firstName lastName email phoneNumber' });
-    const totalCount = await countData(productModel, criteria);
 
     if (search) {
       const regex = new RegExp(search, 'i');
-      response = response.filter(item =>
-        regex.test(item?.userId?.firstName || '') ||
-        regex.test(item?.userId?.lastName || '')
-      );
+      criteria.$or = [
+        { name: { $regex: regex } },
+        { description: { $regex: regex } },
+        { category: { $regex: regex } },
+        { price: { $regex: regex } },
+        { 'userId.firstName': { $regex: regex } },
+        { 'userId.lastName': { $regex: regex } }
+      ];
     }
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+
+    if (page && limit) {
+      options.skip = (pageNum - 1) * limitNum;
+      options.limit = limitNum;
+      options.sort = { createdAt: -1 };
+    }
+
+    let response = await productModel
+      .find(criteria, {}, options)
+      .populate({
+        path: 'userId',
+        select: 'firstName lastName email phoneNumber',
+        match: search
+          ? {
+            $or: [
+              { firstName: { $regex: search, $options: 'i' } },
+              { lastName: { $regex: search, $options: 'i' } }
+            ]
+          }
+          : {}
+      })
+      .lean();
+
+    if (search) {
+      response = response.filter(item => item.userId !== null);
+    }
+
+    const totalCount = await countData(productModel, criteria);
 
     const stateObj = {
       page: pageNum,
       limit: limitNum,
-      page_limit: Math.ceil(totalCount / limitNum) || 1,
+      page_limit: Math.ceil(totalCount / limitNum) || 1
     };
 
-    return res.status(200).json(new apiResponse(200, responseMessage.getDataSuccess('product'), { product_data: response, totalData: totalCount, state: stateObj }, {}));
+    return res.status(200).json(
+      new apiResponse(
+        200,
+        responseMessage.getDataSuccess('product'),
+        { product_data: response, totalData: totalCount, state: stateObj },
+        {}
+      )
+    );
   } catch (error) {
     console.log(error);
-    return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    return res
+      .status(500)
+      .json(new apiResponse(500, responseMessage.internalServerError, {}, error));
   }
 };
+
 
 
 export const deleteProductById = async (req, res) => {
