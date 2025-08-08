@@ -33,7 +33,7 @@ export const updateInquiry = async (req, res) => {
 export const getInquiryById = async (req, res) => {
     try {
         const { inquiryId } = req.params;
-        const inquiry = await InquiriesModel.findOne({ _id: new ObjectId(inquiryId) });
+        const inquiry = await InquiriesModel.findOne({ _id: new ObjectId(inquiryId) }).populate('userId', 'firstName lastName email phoneNumber');
         if (!inquiry) { return res.status(404).json({ success: false, message: "Inquiry not found", }); }
 
         return res.status(200).json(new apiResponse(200, responseMessage.getDataSuccess("Inquiry"), inquiry, {}));
