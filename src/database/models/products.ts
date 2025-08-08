@@ -7,7 +7,7 @@ const productsSchema = new mongoose.Schema({
     description: { type: String },
     price: { type: String },
     category: { type: String },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
     isDeleted: { type: Boolean, default: false }
 
 }, { timestamps: true, versionKey: false });

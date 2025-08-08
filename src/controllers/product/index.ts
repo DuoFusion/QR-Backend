@@ -42,7 +42,7 @@ export const getProductById = async (req, res) => {
   reqInfo(req)
   try {
     const { productId } = req.params;
-    const product = await productModel.findOne({ _id: new ObjectId(productId), isDeleted: false });
+    const product = await productModel.findOne({ _id: new ObjectId(productId), isDeleted: false }).populate('userId', 'firstName lastName email phoneNumber');;
     if (!product) {
       return res.status(404).json({ success: false, message: "product is not found", });
     }
@@ -79,7 +79,8 @@ export const get_all_users = async (req, res) => {
       options.limit = parseInt(limit);
     }
 
-    const response = await getData(productModel, criteria, {}, options);
+    let response = await getData(productModel, criteria, {}, options);
+    response = await productModel.populate(response, { path: 'userId', select: 'firstName lastName email phoneNumber' });
     const totalCount = await countData(productModel, criteria);
 
     const stateObj = {

@@ -16,7 +16,7 @@ export const addsetting = async (req, res) => {
     const body = req.body;
     const user = await userModel.findOne({ _id: new ObjectId(body.userId), isDeleted: false });
     if (!user) return res.status(404).json(new apiResponse(404, responseMessage?.getDataNotFound("user"), {}, {}));
-    
+
     if (body.qrlink) {
       const qrCodeBase64 = await QRCode.toDataURL(body.qrlink);
       const base64Data = qrCodeBase64.replace(/^data:image\/png;base64,/, "");
@@ -92,7 +92,7 @@ export const getsettingById = async (req, res) => {
   reqInfo(req)
   try {
     const { settingId } = req.params;
-    const setting = await settingModel.findOne({ _id: new ObjectId(settingId), isDeleted: false });
+    const setting = await settingModel.findOne({ _id: new ObjectId(settingId), isDeleted: false }).populate('userId', 'firstName lastName email phoneNumber');
     if (!setting) {
       return res.status(404).json({ success: false, message: "setting not found", });
     }
@@ -122,7 +122,8 @@ export const getAllsetting = async (req, res) => {
       options.limit = parseInt(limit);
     }
 
-    const response = await getData(settingModel, criteria, {}, options);
+    let response = await getData(settingModel, criteria, {}, options);
+    response = await settingModel.populate(response, { path: 'userId', select: 'firstName lastName email phoneNumber' });
     const totalCount = await countData(settingModel, criteria);
 
     const stateObj = {

@@ -9,7 +9,11 @@ const orderSchema = new mongoose.Schema({
     paymentMethod: { type: String },
     price: { type: String },
     isDeleted: { type: Boolean, default: false },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
+    userId: [
+        {
+            
+        }
+    ],
     productId: { type: mongoose.Schema.Types.ObjectId, ref: "Products" }
 
 }, { timestamps: true, versionKey: false });

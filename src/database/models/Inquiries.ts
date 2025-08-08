@@ -6,7 +6,7 @@ const InquiriesSchema = new mongoose.Schema({
     email: { type: String, required: true },
     phone: { type: String, required: true },
     message: { type: String, required: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
     isDeleted: { type: Boolean, default: false }
 
 }, { timestamps: true, versionKey: false });

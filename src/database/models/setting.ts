@@ -16,7 +16,7 @@ const settingSchema = new mongoose.Schema({
     address: { type: String },
     qrCode: { type: String },
     bannerImage: { type: String },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
     isDeleted: { type: Boolean, default: false }
 
 }, { timestamps: true, versionKey: false });
