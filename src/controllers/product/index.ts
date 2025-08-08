@@ -63,7 +63,7 @@ export const get_all_users = async (req, res) => {
 
     if (type) criteria.type = type;
 
-    if (Filter === 'userId' && userId) {
+    if (Filter === 'userfilter' && userId) {
       criteria.userId = new ObjectId(userId);
     }
     else if (Filter === 'all') {
