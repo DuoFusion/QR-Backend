@@ -54,10 +54,6 @@ export const getProductById = async (req, res) => {
   }
 };
 
-
-
-
-
 export const get_all_users = async (req, res) => {
   reqInfo(req);
   try {
@@ -85,6 +81,14 @@ export const get_all_users = async (req, res) => {
     let response = await getData(productModel, criteria, {}, options);
     response = await productModel.populate(response, { path: 'userId', select: 'firstName lastName email phoneNumber' });
     const totalCount = await countData(productModel, criteria);
+
+    if (search) {
+      const regex = new RegExp(search, 'i');
+      response = response.filter(item =>
+        regex.test(item?.userId?.firstName || '') ||
+        regex.test(item?.userId?.lastName || '')
+      );
+    }
 
     const stateObj = {
       page: pageNum,
