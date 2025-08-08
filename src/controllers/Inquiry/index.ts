@@ -46,8 +46,11 @@ export const getInquiryById = async (req, res) => {
 export const getAllInquiries = async (req, res) => {
     reqInfo(req);
     try {
-        let { type, search, page, limit } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
+        let { type, search, page, limit, userFilter } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
         if (type) criteria.type = type;
+
+        if (userFilter) criteria.userId = new ObjectId(userFilter);
+
         if (search) {
             criteria.$or = [
                 { name: { $regex: search, $options: 'i' } },
@@ -74,7 +77,7 @@ export const getAllInquiries = async (req, res) => {
             limit: limitNum,
             page_limit: Math.ceil(totalCount / limitNum) || 1,
         };
-        return res.status(200).json(new apiResponse(200, responseMessage.getDataSuccess('inquiries'), { product_data: response, totalData: totalCount, state: stateObj }, {}));
+        return res.status(200).json(new apiResponse(200, responseMessage.getDataSuccess('inquiries'), { inquiry_data: response, totalData: totalCount, state: stateObj }, {}));
     } catch (error) {
         console.log(error);
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));

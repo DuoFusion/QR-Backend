@@ -39,7 +39,11 @@ export const updateOrder = async (req, res) => {
 export const getAllOrders = async (req, res) => {
     reqInfo(req);
     try {
-        let { search, page, limit } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
+        let { type, search, page, limit, userFilter } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
+        if (type) criteria.type = type;
+
+        if (userFilter) criteria.userId = new ObjectId(userFilter);
+
         if (search) {
             criteria.$or = [
                 { name: { $regex: search, $options: 'i' } },
