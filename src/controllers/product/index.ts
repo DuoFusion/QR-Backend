@@ -74,9 +74,12 @@ export const get_all_users = async (req, res) => {
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
 
+
     if (page && limit) {
       options.skip = (parseInt(page) - 1) * parseInt(limit);
       options.limit = parseInt(limit);
+      options.sort = { createdAt: -1 };;
+
     }
 
     let response = await getData(productModel, criteria, {}, options);

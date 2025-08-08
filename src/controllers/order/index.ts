@@ -76,8 +76,10 @@ export const getOrderById = async (req, res) => {
     reqInfo(req)
     try {
         const { orderId } = req.params;
-        const order = await orderModel.findOne({ _id: new ObjectId(orderId), isDeleted: false });
-        if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+        const order = await orderModel.findOne({ _id: new ObjectId(orderId), isDeleted: false })
+            .populate('productId', 'image name description price category')
+            .populate('userId', 'firstName lastName email phoneNumber');
+        if (!order) { return res.status(404).json({ success: false, message: "Order not found" }); }
         return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess('Order successfully'), order, {}));
     } catch (error) {
         console.log(error);
