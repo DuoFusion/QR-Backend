@@ -24,7 +24,7 @@ export const updateInquiry = async (req, res) => {
         const body = req.body;
         const updatedInquiry = await InquiriesModel.findOneAndUpdate({ _id: new ObjectId(inquiryId) }, body, { new: true });
         if (!updatedInquiry) { return res.status(404).json({ success: false, message: "Inquiry not found" }); }
-        res.status(200).json(new apiResponse(200, responseMessage.updateDataSuccess("inquiry"), updatedInquiry , {}));
+        res.status(200).json(new apiResponse(200, responseMessage.updateDataSuccess("inquiry"), updatedInquiry, {}));
     } catch (error: any) {
         res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
@@ -62,6 +62,7 @@ export const getAllInquiries = async (req, res) => {
         if (page && limit) {
             options.skip = (parseInt(page) - 1) * parseInt(limit);
             options.limit = parseInt(limit);
+            options.sort = { createdAt: -1 };
         }
 
         const response = await getData(InquiriesModel, criteria, {}, options);
