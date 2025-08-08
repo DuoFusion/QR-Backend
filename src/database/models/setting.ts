@@ -14,7 +14,7 @@ const settingSchema = new mongoose.Schema({
     email: { type: String, required: true },
     phoneNumber: { type: String, required: true },
     address: { type: String },
-    qrcode: { type: String },
+    qrCode: { type: String },
     bannerImage: { type: String },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
     isDeleted: { type: Boolean, default: false }
