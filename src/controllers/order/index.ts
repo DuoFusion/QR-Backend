@@ -56,8 +56,11 @@ export const getAllOrders = async (req, res) => {
             options.limit = parseInt(limit);
         }
 
-        const response = await getData(orderModel, criteria, {}, options);
-        const totalCount = await countData(orderModel, criteria);
+        const response = await orderModel
+            .find(criteria, {}, options)
+            .populate('productId', 'image name description price category')
+            .populate('userId', 'firstName lastName email phoneNumber')
+            .lean(); const totalCount = await countData(orderModel, criteria);
 
         const stateObj = {
             page: pageNum,
