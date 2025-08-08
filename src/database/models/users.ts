@@ -11,6 +11,7 @@ const usersSchema = new mongoose.Schema({
     address: { type: String },
     type: { type: String },
     link: { type: String },
+    
     role: { type: String, enum: ADMIN_ROLES, default: 'user' },
     password: { type: String, required: true },
     confirmPassword: { type: String },

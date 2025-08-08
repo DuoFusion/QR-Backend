@@ -16,6 +16,10 @@ const settingSchema = new mongoose.Schema({
     address: { type: String },
     qrCode: { type: String },
     bannerImage: { type: String },
+
+    primary: { type: String, required: true },
+    secondary: { type: String, required: true },
+
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
     isDeleted: { type: Boolean, default: false }
 
