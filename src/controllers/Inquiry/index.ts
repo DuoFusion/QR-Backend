@@ -65,8 +65,9 @@ export const getAllInquiries = async (req, res) => {
             options.sort = { createdAt: -1 };
         }
 
-        const response = await getData(InquiriesModel, criteria, {}, options);
-        const totalCount = await countData(InquiriesModel, criteria);
+
+        let response = await getData(InquiriesModel, criteria, {}, options);
+        response = await InquiriesModel.populate(response, { path: 'userId', select: 'firstName lastName email phoneNumber' }); const totalCount = await countData(InquiriesModel, criteria);
 
         const stateObj = {
             page: pageNum,

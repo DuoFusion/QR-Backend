@@ -85,8 +85,7 @@ export const get_all_users = async (req, res) => {
     }
 
     let response = await productModel
-      .find(criteria, {}, options)
-      .populate({
+      .find(criteria, {}, options).populate({
         path: 'userId',
         select: 'firstName lastName email phoneNumber',
       })
