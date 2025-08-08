@@ -57,17 +57,13 @@ export const getProductById = async (req, res) => {
 export const get_all_users = async (req, res) => {
   reqInfo(req);
   try {
-    let { type, search, page, limit, Filter, userId } = req.query;
+    let { type, search, page, limit, Filter, userFilter } = req.query;
     let options: any = { lean: true };
     let criteria: any = { isDeleted: false };
 
     if (type) criteria.type = type;
 
-    if (Filter === 'userfilter' && userId) {
-      criteria.userId = new ObjectId(userId);
-    }
-    else if (Filter === 'all') {
-    }
+    if (userFilter) criteria.userId = new ObjectId(userFilter)
 
     if (search) {
       const regex = new RegExp(search, 'i');
@@ -75,9 +71,7 @@ export const get_all_users = async (req, res) => {
         { name: { $regex: regex } },
         { description: { $regex: regex } },
         { category: { $regex: regex } },
-        { price: { $regex: regex } },
-        { 'userId.firstName': { $regex: regex } },
-        { 'userId.lastName': { $regex: regex } }
+        { price: { $regex: regex } }
       ];
     }
 
@@ -95,14 +89,6 @@ export const get_all_users = async (req, res) => {
       .populate({
         path: 'userId',
         select: 'firstName lastName email phoneNumber',
-        match: search
-          ? {
-            $or: [
-              { firstName: { $regex: search, $options: 'i' } },
-              { lastName: { $regex: search, $options: 'i' } }
-            ]
-          }
-          : {}
       })
       .lean();
 
