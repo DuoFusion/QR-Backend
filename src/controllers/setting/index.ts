@@ -17,8 +17,8 @@ export const addsetting = async (req, res) => {
     const user = await userModel.findOne({ _id: new ObjectId(body.userId), isDeleted: false });
     if (!user) return res.status(404).json(new apiResponse(404, responseMessage?.getDataNotFound("user"), {}, {}));
 
-    if (body.qrlink) {
-      const qrCodeBase64 = await QRCode.toDataURL(body.qrlink);
+    if (body.qrCode) {
+      const qrCodeBase64 = await QRCode.toDataURL(body.qrcode);
       const base64Data = qrCodeBase64.replace(/^data:image\/png;base64,/, "");
       const fileName = `qr_${Date.now()}.png`;
       const uploadDir = path.join(__dirname, "../../../../uploads");
@@ -53,9 +53,9 @@ export const updatesetting = async (req: Request, res: Response) => {
       return res.status(404).json(new apiResponse(404, responseMessage.getDataNotFound("setting"), {}, {}));
     }
 
-    if (body.qrlink) {
+    if (body.qrcode) {
       // Delete old QR file
-      const oldFileNameMatch = isExist.qrCode?.match(/qr_(\d+)\.png/);
+      const oldFileNameMatch = isExist.qrcode?.match(/qr_(\d+)\.png/);
       if (oldFileNameMatch) {
         const oldFileName = `qr_${oldFileNameMatch[1]}.png`;
         const oldFilePath = path.join(__dirname, "../../../../uploads", oldFileName);
@@ -63,7 +63,7 @@ export const updatesetting = async (req: Request, res: Response) => {
       }
 
       // Generate new QR code
-      const qrCodeBase64 = await QRCode.toDataURL(body.qrlink);
+      const qrCodeBase64 = await QRCode.toDataURL(body.qrcode);
       const base64Data = qrCodeBase64.replace(/^data:image\/png;base64,/, "");
 
       const fileName = `qr_${Date.now()}.png`;
