@@ -107,7 +107,7 @@ export const getAllsetting = async (req, res) => {
   try {
     let { search, page, limit,userFilter } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
 
-        if (userFilter) criteria.settingId = new ObjectId(userFilter)
+        if (userFilter) criteria._id = new ObjectId(userFilter)
 
     if (search) {
       criteria.$or = [
@@ -117,6 +117,8 @@ export const getAllsetting = async (req, res) => {
         { phoneNumber: { $regex: search, $options: 'i' } }
       ];
     }
+
+    
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 1;
 
