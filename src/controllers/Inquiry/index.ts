@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { InquiriesModel } from "../../database";
+import { InquiriesModel, settingModel, userModel } from "../../database";
 import { apiResponse } from "../../common";
 import { countData, getData, responseMessage } from "../../helper";
 import { reqInfo } from "../../helper/winston_logger";
@@ -8,14 +8,17 @@ let ObjectId = require('mongoose').Types.ObjectId;
 
 export const addInquiry = async (req, res) => {
     reqInfo(req)
+    const body = req.body;
     try {
-        const body = req.body;
+        let user = await userModel.findOne({ settingIds: { $in: [new ObjectId(body.settingId)] }, isDeleted: false })
+        if (!user) return res.status(404).json(new apiResponse(404, responseMessage?.getDataNotFound("User"), {}, {}))
+            
+        body.userId = new ObjectId(user._id)
         const newInquiry = await InquiriesModel.create(body);
         return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess("Inquiry"), newInquiry, {}));
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
-    }
-};
+    }};
 
 export const updateInquiry = async (req, res) => {
     reqInfo(req)

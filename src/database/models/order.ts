@@ -10,6 +10,7 @@ const orderSchema = new mongoose.Schema({
     price: { type: String },
     isDeleted: { type: Boolean, default: false },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
+    settingId: { type: mongoose.Schema.Types.ObjectId, ref: "settings" },
     productId: { type: mongoose.Schema.Types.ObjectId, ref: "Products" }
 
 }, { timestamps: true, versionKey: false });

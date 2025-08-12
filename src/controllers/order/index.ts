@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { orderModel } from "../../database";
+import { orderModel, userModel } from "../../database";
 import { countData, getData, responseMessage } from "../../helper";
 import { apiResponse } from "../../common";
 import { ObjectId } from 'mongodb';
@@ -12,6 +12,9 @@ export const addOrder = async (req, res) => {
     reqInfo(req)
     try {
         const body = req.body;
+        let user = await userModel.findOne({ settingIds: { $in: [new ObjectId(body.settingId)] }, isDeleted: false })
+        if (!user) return res.status(404).json(new apiResponse(404, responseMessage?.getDataNotFound("User"), {}, {}))
+        body.userId = new ObjectId(user._id)
         const addorder = await orderModel.create(body);
         return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess('Order successfully'), addorder, {}));
     } catch (error) {

@@ -20,7 +20,7 @@ const usersSchema = new mongoose.Schema({
     otpExpireTime: { type: Date, default: null },
     isEmailVerified: { type: Boolean, default: false },
 
-    settingIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "setting" }],
+    settingIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "setting", default: null }],
     isDeleted: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
 
