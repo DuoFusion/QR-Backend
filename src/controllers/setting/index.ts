@@ -1,4 +1,4 @@
-import { settingModel, userModel } from "../../database/models";
+import { productModel, settingModel, userModel } from "../../database/models";
 import { Request, Response } from "express";
 import { countData, createData, getData, responseMessage, updateData } from "../../helper";
 import { apiResponse } from "../../common";
@@ -87,12 +87,12 @@ export const updatesetting = async (req: Request, res: Response) => {
   }
 };
 
-
 export const getsettingById = async (req, res) => {
   reqInfo(req)
   try {
     const { settingId } = req.params;
-    const setting = await settingModel.findOne({ _id: new ObjectId(settingId), isDeleted: false }).populate('userId', 'firstName lastName email phoneNumber');
+    const setting = await settingModel.findOne({ _id: new ObjectId(settingId), isDeleted: false }).populate('userId', 'firstName lastName email phoneNumber')
+      .populate('productId', 'image name description price category');
     if (!setting) {
       return res.status(404).json({ success: false, message: "setting not found", });
     }
@@ -105,10 +105,15 @@ export const getsettingById = async (req, res) => {
 export const getAllsetting = async (req, res) => {
   reqInfo(req);
   try {
-    let { search, page, limit,userFilter } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
+    let { search, page, limit, userFilter } = req.query;
 
-        if (userFilter) criteria._id = new ObjectId(userFilter)
+    const criteria: any = { isDeleted: false };
+    const options: any = { lean: true };
 
+    // Filter by user
+    if (userFilter) criteria._id = new ObjectId(userFilter);
+
+    // Search filter
     if (search) {
       criteria.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -118,31 +123,48 @@ export const getAllsetting = async (req, res) => {
       ];
     }
 
-    
+    // Pagination
     const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 1;
+    const limitNum = parseInt(limit) || 10;
+    options.skip = (pageNum - 1) * limitNum;
+    options.limit = limitNum;
 
-    if (page && limit) {
-      options.skip = (parseInt(page) - 1) * parseInt(limit);
-      options.limit = parseInt(limit);
-    }
+    // Sorting (latest first)
+    options.sort = { createdAt: -1 };
 
-    let response = await getData(settingModel, criteria, {}, options);
-    response = await settingModel.populate(response, { path: 'userId', select: 'firstName lastName email phoneNumber' });
-    const totalCount = await countData(settingModel, criteria);
+    // Data fetch with populate
+    let response = await settingModel
+      .find(criteria, {}, options)
+      .populate('userId', 'firstName lastName email phoneNumber')
+      .populate('productId', 'image name description price category')
+      .exec();
 
+    // Total count
+    const totalCount = await settingModel.countDocuments(criteria);
+
+    // Pagination state object
     const stateObj = {
       page: pageNum,
       limit: limitNum,
-      page_limit: Math.ceil(totalCount / limitNum) || 1,
+      page_limit: Math.ceil(totalCount / limitNum) || 1
     };
 
-    return res.status(200).json(new apiResponse(200, responseMessage.getDataSuccess('setting'), { setting_data: response, totalData: totalCount, state: stateObj }, {}));
+    return res.status(200).json(
+      new apiResponse(
+        200,
+        responseMessage.getDataSuccess('setting'),
+        { setting_data: response, totalData: totalCount, state: stateObj },
+        {}
+      )
+    );
   } catch (error) {
     console.log(error);
-    return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    return res.status(500).json(
+      new apiResponse(500, responseMessage.internalServerError, {}, error)
+    );
   }
 };
+
 
 
 export const deletesettingById = async (req, res) => {
