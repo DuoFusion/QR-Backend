@@ -31,7 +31,7 @@ export const addsetting = async (req, res) => {
       body.qrCode = publicUrl;
     }
     const response = await settingModel.create(body);
-
+    await userModel.findOneAndUpdate({ _id: new ObjectId(response?.userId), isDeleted: false }, { $push: { settingIds: new ObjectId(response._id) } }, { new: true })
     return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess('setting data is successfully'), response, {}));
   } catch (error) {
     console.error(error);
@@ -91,7 +91,9 @@ export const getsettingById = async (req, res) => {
   reqInfo(req)
   try {
     const { settingId } = req.params;
-    const setting = await settingModel.findOne({ _id: new ObjectId(settingId), isDeleted: false }).populate('userId', 'firstName lastName email phoneNumber productId');
+    const setting = await settingModel
+      .findOne({ _id: new ObjectId(settingId), isDeleted: false })
+      .populate('userId', 'firstName lastName email phoneNumber');
     if (!setting) {
       return res.status(404).json({ success: false, message: "setting not found", });
     }
@@ -109,10 +111,8 @@ export const getAllsetting = async (req, res) => {
     const criteria: any = { isDeleted: false };
     const options: any = { lean: true };
 
-    // Filter by user
     if (userFilter) criteria._id = new ObjectId(userFilter);
 
-    // Search filter
     if (search) {
       criteria.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -122,25 +122,19 @@ export const getAllsetting = async (req, res) => {
       ];
     }
 
-    // Pagination
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
     options.skip = (pageNum - 1) * limitNum;
     options.limit = limitNum;
 
-    // Sorting (latest first)
     options.sort = { createdAt: -1 };
 
-    // Data fetch with populate
     let response = await settingModel
       .find(criteria, {}, options)
-      .populate('userId', 'firstName lastName email phoneNumber productId')
+      .populate('userId', 'firstName lastName email phoneNumber')
       .exec();
 
-    // Total count
     const totalCount = await settingModel.countDocuments(criteria);
-
-    // Pagination state object
     const stateObj = {
       page: pageNum,
       limit: limitNum,

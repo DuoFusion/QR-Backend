@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { ADMIN_ROLES } from "../../common";
-import { required } from "joi";
 
 const usersSchema = new mongoose.Schema({
 
@@ -21,6 +20,7 @@ const usersSchema = new mongoose.Schema({
     otpExpireTime: { type: Date, default: null },
     isEmailVerified: { type: Boolean, default: false },
 
+    settingIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "setting" }],
     isDeleted: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
 
