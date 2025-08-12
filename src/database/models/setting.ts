@@ -15,6 +15,7 @@ const settingSchema = new mongoose.Schema({
     phoneNumber: { type: String, required: true },
     address: { type: String },
     qrCode: { type: String },
+    backgroundColor: { type: String },
     bannerImage: { type: String },
 
     primary: { type: String, required: true },
