@@ -135,8 +135,7 @@ export const getAllsetting = async (req, res) => {
     // Data fetch with populate
     let response = await settingModel
       .find(criteria, {}, options)
-      .populate('userId', 'firstName lastName email phoneNumber')
-      .populate('productId', 'image name description price category')
+      .populate('userId', 'firstName lastName email phoneNumber productId')
       .exec();
 
     // Total count
