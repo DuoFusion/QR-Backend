@@ -91,8 +91,7 @@ export const getsettingById = async (req, res) => {
   reqInfo(req)
   try {
     const { settingId } = req.params;
-    const setting = await settingModel.findOne({ _id: new ObjectId(settingId), isDeleted: false }).populate('userId', 'firstName lastName email phoneNumber')
-      .populate('productId', 'image name description price category');
+    const setting = await settingModel.findOne({ _id: new ObjectId(settingId), isDeleted: false }).populate('userId', 'firstName lastName email phoneNumber productId');
     if (!setting) {
       return res.status(404).json({ success: false, message: "setting not found", });
     }
