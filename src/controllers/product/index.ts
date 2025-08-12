@@ -57,7 +57,7 @@ export const getProductById = async (req, res) => {
 export const get_all_users = async (req, res) => {
   reqInfo(req);
   try {
-    let { type, search, page, limit, Filter, userFilter } = req.query;
+    let { type, search, page, limit, userFilter } = req.query;
     let options: any = { lean: true };
     let criteria: any = { isDeleted: false };
 

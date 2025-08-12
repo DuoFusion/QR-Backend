@@ -105,7 +105,10 @@ export const getsettingById = async (req, res) => {
 export const getAllsetting = async (req, res) => {
   reqInfo(req);
   try {
-    let { search, page, limit } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
+    let { search, page, limit,userFilter } = req.query, options: any = { lean: true }, criteria: any = { isDeleted: false };
+
+        if (userFilter) criteria.userId = new ObjectId(userFilter)
+
     if (search) {
       criteria.$or = [
         { title: { $regex: search, $options: 'i' } },
