@@ -8,6 +8,7 @@ const productsSchema = new mongoose.Schema({
     price: { type: String },
     category: { type: String },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
+    settingId: { type: mongoose.Schema.Types.ObjectId, ref: "setting" },
     isDeleted: { type: Boolean, default: false }
 
 }, { timestamps: true, versionKey: false });

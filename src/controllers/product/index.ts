@@ -57,13 +57,13 @@ export const getProductById = async (req, res) => {
 export const get_all_users = async (req, res) => {
   reqInfo(req);
   try {
-    let { type, search, page, limit, userFilter } = req.query;
+    let { type, search, page, limit, userFilter} = req.query;
     let options: any = { lean: true };
     let criteria: any = { isDeleted: false };
 
     if (type) criteria.type = type;
 
-    if (userFilter) criteria.userId = new ObjectId(userFilter)
+    if (userFilter) criteria.userId = new ObjectId(userFilter);
 
     if (search) {
       const regex = new RegExp(search, 'i');
@@ -74,7 +74,7 @@ export const get_all_users = async (req, res) => {
         { price: { $regex: regex } }
       ];
     }
-
+    
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
 
