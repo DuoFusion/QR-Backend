@@ -2,8 +2,8 @@ import { required } from "joi";
 import mongoose from "mongoose";
 
 const settingSchema = new mongoose.Schema({
-    logoImage: { type: String },
-    title: { type: String },
+    logoImage: { type: String, required: true },
+    title: { type: String, required: true },
     content: { type: String },
     socialLinks: {
         whatsapp: { type: String },

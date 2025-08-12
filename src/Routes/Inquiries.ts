@@ -8,9 +8,9 @@ const router = express.Router();
 
 router.get("/",InquiryController.getAllInquiries);
 router.get("/:inquiryId",InquiryController.getInquiryById);
+router.post("/add",InquiryController.addInquiry);
 
 router.use(adminJWT)
-router.post("/add",InquiryController.addInquiry);
 router.post("/edit",InquiryController.updateInquiry);
 router.delete("/delete/:inquiryId",InquiryController.deleteInquiry);
 

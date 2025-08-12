@@ -8,9 +8,9 @@ const router = express.Router();
 
 router.get("/", orderController.getAllOrders);
 router.get("/:orderId", orderController.getOrderById);
+router.post("/add", orderController.addOrder);
 
 router.use(adminJWT)
-router.post("/add", orderController.addOrder);
 router.post("/edit", orderController.updateOrder);
 router.delete("/delete/:orderId", orderController.deleteOrder);
 
