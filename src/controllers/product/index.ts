@@ -42,7 +42,7 @@ export const getProductById = async (req, res) => {
   reqInfo(req)
   try {
     const { productId } = req.params;
-    const product = await productModel.findOne({ _id: new ObjectId(productId), isDeleted: false }).populate('userId', 'firstName lastName email phoneNumber');;
+    const product = await productModel.findOne({ _id: new ObjectId(productId), isDeleted: false }).populate('userId', 'firstName lastName email phoneNumber').populate('settingId', 'logoImage title content email phoneNumber address qrCode backgroundColor bannerImage');
     if (!product) {
       return res.status(404).json({ success: false, message: "product is not found", });
     }
@@ -57,13 +57,14 @@ export const getProductById = async (req, res) => {
 export const get_all_users = async (req, res) => {
   reqInfo(req);
   try {
-    let { type, search, page, limit, userFilter} = req.query;
+    let { type, search, page, limit, userFilter, settingFilter } = req.query;
     let options: any = { lean: true };
     let criteria: any = { isDeleted: false };
 
     if (type) criteria.type = type;
 
     if (userFilter) criteria.userId = new ObjectId(userFilter);
+    if (settingFilter) criteria.settingId = new ObjectId(settingFilter);
 
     if (search) {
       const regex = new RegExp(search, 'i');
@@ -74,7 +75,7 @@ export const get_all_users = async (req, res) => {
         { price: { $regex: regex } }
       ];
     }
-    
+
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
 
@@ -88,7 +89,7 @@ export const get_all_users = async (req, res) => {
       .find(criteria, {}, options).populate({
         path: 'userId',
         select: 'firstName lastName email phoneNumber',
-      })
+      }).populate('settingId', 'logoImage title content email phoneNumber address qrCode backgroundColor bannerImage')
       .lean();
 
     if (search) {
