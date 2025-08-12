@@ -22,7 +22,7 @@ const settingSchema = new mongoose.Schema({
     secondary: { type: String, required: true },
 
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
-    productId: { type: mongoose.Schema.Types.ObjectId, ref: "Products" },
+    productId: [{ type: mongoose.Schema.Types.ObjectId, ref: "Products" }],
     isDeleted: { type: Boolean, default: false }
 
 }, { timestamps: true, versionKey: false });
