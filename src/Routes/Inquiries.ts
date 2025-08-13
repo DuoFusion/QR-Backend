@@ -4,8 +4,6 @@ import { adminJWT } from "../helper/jwt";
 
 const router = express.Router();
 
-// Routes
-
 router.get("/",InquiryController.getAllInquiries);
 router.get("/:inquiryId",InquiryController.getInquiryById);
 router.post("/add",InquiryController.addInquiry);
