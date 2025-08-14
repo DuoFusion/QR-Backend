@@ -2,7 +2,7 @@ import { productModel, settingModel, userModel } from "../../database/models";
 import { Request, Response } from "express";
 import { countData, createData, getData, responseMessage, updateData } from "../../helper";
 import { apiResponse } from "../../common";
-import QRCode from "qrCode";
+import qrcode from "qrCode";
 import path from "path";
 import fs from 'fs';
 import { config } from "../../../config";
@@ -18,7 +18,7 @@ export const addsetting = async (req, res) => {
     if (!user) return res.status(404).json(new apiResponse(404, responseMessage?.getDataNotFound("user"), {}, {}));
 
     if (body.qrCode) {
-      const qrCodeBase64 = await QRCode.toDataURL(body.qrCode);
+      const qrCodeBase64 = await qrcode.toDataURL(body.qrCode);
       const base64Data = qrCodeBase64.replace(/^data:image\/png;base64,/, "");
       const fileName = `qr_${Date.now()}.png`;
       const uploadDir = path.join(__dirname, "../../../../uploads");
@@ -63,7 +63,7 @@ export const updatesetting = async (req: Request, res: Response) => {
       }
 
       // Generate new QR code
-      const qrCodeBase64 = await QRCode.toDataURL(body.qrCode);
+      const qrCodeBase64 = await qrcode.toDataURL(body.qrCode);
       const base64Data = qrCodeBase64.replace(/^data:image\/png;base64,/, "");
 
       const fileName = `qr_${Date.now()}.png`;
