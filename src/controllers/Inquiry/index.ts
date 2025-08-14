@@ -12,7 +12,6 @@ export const addInquiry = async (req, res) => {
     try {
         let user = await userModel.findOne({ settingIds: { $in: [new ObjectId(body.settingId)] }, isDeleted: false })
         if (!user) return res.status(404).json(new apiResponse(404, responseMessage?.getDataNotFound("User"), {}, {}))
-            
         body.userId = new ObjectId(user._id)
         const newInquiry = await InquiriesModel.create(body);
         return res.status(200).json(new apiResponse(200, responseMessage.addDataSuccess("Inquiry"), newInquiry, {}));
