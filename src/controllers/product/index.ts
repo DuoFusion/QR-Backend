@@ -69,10 +69,10 @@ export const get_all_users = async (req, res) => {
     if (search) {
       const regex = new RegExp(search, 'i');
       criteria.$or = [
-        { name: { $regex: regex } },
-        { description: { $regex: regex } },
-        { category: { $regex: regex } },
-        { price: { $regex: regex } }
+        { name: { $regex: regex, $options: 'si' } },
+        { description: { $regex: regex, $options: 'si' } },
+        { category: { $regex: regex, $options: 'si' } },
+        { price: { $regex: regex, $options: 'si' } }
       ];
     }
 

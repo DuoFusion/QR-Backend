@@ -28,7 +28,7 @@ export const add_user = async (req, res) => {
     // Ensure confirmPassword matches password
 
     body.role = ADMIN_ROLES.USER;
-
+    body.fullName = body.firstName + " " + body.lastName
     const user = await new userModel(body).save();
     console.log("User added successfully:", user);
     if (!user)
@@ -43,6 +43,7 @@ export const add_user = async (req, res) => {
 
 export const update_user = async (req, res) => {
   reqInfo(req);
+  let body = req.body
   try {
     const { userId, email, phoneNumber, password } = req.body;
 
@@ -66,8 +67,21 @@ export const update_user = async (req, res) => {
     if (password) {
       const saltRounds = 10;
       req.body.password = await bcrypt.hash(password, saltRounds);
-          // req.body.confirmPassword = req.body.password;
+      // req.body.confirmPassword = req.body.password;
     }
+
+    if (body.firstName) {
+      body.fullName = body.firstName + " " + user.lastName
+    }
+
+    if (body.lastName) {
+      body.fullName = user.firstName + " " + body.lastName
+    }
+
+    if (body.firstName && body.lastName) {
+      body.fullName = body.firstName + " " + body.lastName
+    }
+
     const updatedUser = await userModel.findOneAndUpdate({ _id: new ObjectId(userId) }, req.body, { new: true });
     if (!updatedUser)
       return res.status(404).json(new apiResponse(404, responseMessage.updateDataError("user"), {}, {}));
@@ -88,9 +102,10 @@ export const get_all_users = async (req, res) => {
 
     if (search) {
       criteria.$or = [
-        { firstName: { $regex: search, $options: 'i' } },
-        { lastName: { $regex: search, $options: 'i' } },
-        { phoneNumber: { $regex: search, $options: 'i' } }
+        { firstName: { $regex: search, $options: 'si' } },
+        { lastName: { $regex: search, $options: 'si' } },
+        { fullName: { $regex: search, $options: 'si' } },
+        { phoneNumber: { $regex: search, $options: 'si' } }
       ];
     }
 
@@ -101,7 +116,7 @@ export const get_all_users = async (req, res) => {
       options.skip = (parseInt(page) - 1) * parseInt(limit);
       options.limit = parseInt(limit);
     }
-
+    console.log("criteria => ", JSON.stringify(criteria))
     const response = await getData(userModel, criteria, {}, { ...options, sort: { createdAt: -1 } });
 
     const totalCount = await countData(userModel, criteria);

@@ -67,7 +67,8 @@ export const getAllOrders = async (req, res) => {
             .find(criteria, {}, options)
             .populate('productId', 'image name description price category')
             .populate('userId', 'firstName lastName email phoneNumber')
-            .lean(); const totalCount = await countData(orderModel, criteria);
+            .lean();
+        const totalCount = await countData(orderModel, criteria);
 
         const stateObj = {
             page: pageNum,
