@@ -184,13 +184,12 @@ export const reset_password = async (req, res) => {
 export const change_password = async (req, res) => {
   reqInfo(req);
   try {
-    const { email, oldPassword, newPassword, confirmPassword } = req.body;
+    const { email, oldPassword, newPassword, confirmPassword, change_email } = req.body;
 
     const user = await userModel.findOne({ email });
     if (!user) {
       return res.status(404).json(new apiResponse(404, "Email not found.", {}, {}));
     }
-
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       return res.status(400).json(new apiResponse(400, "Old password is incorrect.", {}, {}));
@@ -199,10 +198,18 @@ export const change_password = async (req, res) => {
     if (newPassword !== confirmPassword) {
       return res.status(400).json(new apiResponse(400, "New password and confirm password do not match.", {}, {}));
     }
+    if (change_email) {
+      const existingUser = await userModel.findOne({ email: change_email });
+      if (existingUser) {
+        return res.status(400).json(new apiResponse(400, "New email already exists.", {}, {}));
+      }
+      user.email = change_email;
+    }
+
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedNewPassword;
     user.confirmPassword = req.body.confirmPassword;
-
+    user.email = req.body.email;
 
     await user.save();
 
