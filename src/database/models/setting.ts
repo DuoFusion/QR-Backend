@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 const settingSchema = new mongoose.Schema({
     logoImage: { type: String, required: true },
     title: { type: String, required: true },
-    weburl: { type: String, required: true },
+    weburl: { type: String, required: true, unique: true },
     content: { type: String },
     socialLinks: {
         whatsapp: { type: String },

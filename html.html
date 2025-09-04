@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Website Redirect Demo</title>
+  <link id="favicon" rel="icon" type="image/png" href="https://www.google.com/s2/favicons?domain=google.com">
+  <style>
+    body { font-family: Arial, sans-serif; }
+    input { width: 250px; padding: 6px; }
+    button { padding: 6px 12px; margin-left: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Dynamic Website Loader</h1>
+  <input type="text" id="websiteInput" placeholder="Enter website URL (e.g. google.com)">
+  <button onclick="redirectWebsite()">Go</button>
+
+  <script>
+    function redirectWebsite() {
+      let url = document.getElementById("websiteInput").value.trim();
+
+      if (!url) {
+        alert("Please enter a website URL");
+        return;
+      }
+
+      // Add https if missing
+      if (!url.startsWith("http")) {
+        url = "https://" + url;
+      }
+
+      try {
+        // Extract domain name
+        let domain = new URL(url).hostname;
+        // Change favicon dynamically
+        let favicon = document.getElementById("favicon");
+        favicon.href = "https://www.google.com/s2/favicons?domain=" + domain;
+
+        // Change tab title dynamically
+        document.title = domain + " | Dynamic Loader";
+
+        // Redirect to the website
+        window.location.href = url;
+
+      } catch (err) {
+        alert("Invalid URL! Please enter a correct one.");
+      }
+    }
+  </script>
+</body>
+</html>

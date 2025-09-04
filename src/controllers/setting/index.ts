@@ -112,7 +112,7 @@ export const getAllsetting = async (req, res) => {
     const options: any = { lean: true };
     
     if (userFilter) criteria.userId = new ObjectId(userFilter);
-    if (settingFilter) criteria._id = new ObjectId(settingFilter);
+    if (settingFilter) criteria.weburl = new ObjectId(settingFilter);
 
     if (search) {
       criteria.$or = [
