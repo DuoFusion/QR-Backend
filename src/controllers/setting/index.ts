@@ -110,7 +110,7 @@ export const getAllsetting = async (req, res) => {
 
     const criteria: any = { isDeleted: false };
     const options: any = { lean: true };
-
+    
     if (userFilter) criteria.userId = new ObjectId(userFilter);
     if (settingFilter) criteria._id = new ObjectId(settingFilter);
 

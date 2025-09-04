@@ -8,8 +8,8 @@ const router = express.Router();
 
 router.get('/', settingController.getAllsetting);
 router.get('/:settingId', settingController.getsettingById);
-    
-router.use(adminJWT)
+
+router.use(adminJWT);
 router.post('/add', settingController.addsetting);
 router.post('/edit', settingController.updatesetting);
 router.delete('/delete/:settingId', settingController.deletesettingById);
