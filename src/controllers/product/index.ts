@@ -57,14 +57,35 @@ export const getProductById = async (req, res) => {
 export const get_all_users = async (req, res) => {
   reqInfo(req);
   try {
-    let { type, search, page, limit, userFilter, settingFilter } = req.query;
+    let { type, search, page, limit, userFilter, settingFilter, weburl } = req.query;
     let options: any = { lean: true };
     let criteria: any = { isDeleted: false };
 
     if (type) criteria.type = type;
 
     if (userFilter) criteria.userId = new ObjectId(userFilter);
-    if (settingFilter) criteria.settingId = new ObjectId(settingFilter);
+    
+    if (settingFilter && weburl) {
+      if (ObjectId.isValid(settingFilter)) {
+        criteria.$and = [
+          { _id: new ObjectId(settingFilter) },
+          { weburl: weburl }
+        ];
+      } else {
+        if (settingFilter === weburl) {
+          criteria.weburl = weburl;
+        }
+      }
+    } else if (settingFilter) {
+      // only settingFilter
+      if (ObjectId.isValid(settingFilter)) {
+        criteria._id = new ObjectId(settingFilter);
+      } else {
+        criteria.weburl = settingFilter;
+      }
+    } else if (weburl) {
+      criteria.weburl = weburl;
+    }
 
     if (search) {
       const regex = new RegExp(search, 'i');
