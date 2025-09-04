@@ -103,6 +103,7 @@ export const getsettingById = async (req, res) => {
   }
 };
 
+
 export const getAllsetting = async (req, res) => {
   reqInfo(req);
   try {
@@ -113,52 +114,73 @@ export const getAllsetting = async (req, res) => {
 
     if (userFilter) criteria.userId = new ObjectId(userFilter);
 
-    if (settingFilter && weburl && settingFilter === weburl) {
-      criteria._id = new ObjectId(settingFilter as string);
+    if (settingFilter && weburl) {
+      if (ObjectId.isValid(settingFilter)) {
+        criteria.$and = [
+          { _id: new ObjectId(settingFilter) },
+          { weburl: weburl }
+        ];
+      } else {
+        if (settingFilter === weburl) {
+          criteria.weburl = weburl;
+        }
+      }
+    } else if (settingFilter) {
+      // only settingFilter
+      if (ObjectId.isValid(settingFilter)) {
+        criteria._id = new ObjectId(settingFilter);
+      } else {
+        criteria.weburl = settingFilter;
+      }
+    } else if (weburl) {
       criteria.weburl = weburl;
     }
 
+    // search filter
     if (search) {
       criteria.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { phoneNumber: { $regex: search, $options: 'i' } }
+        { title: { $regex: search, $options: "i" } },
+        { content: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phoneNumber: { $regex: search, $options: "i" } },
       ];
     }
 
+    // pagination
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
     options.skip = (pageNum - 1) * limitNum;
     options.limit = limitNum;
 
+    // sort
     options.sort = { createdAt: -1 };
 
+    // query
     let response = await settingModel
       .find(criteria, {}, options)
-      .populate('userId', 'firstName lastName email phoneNumber')
+      .populate("userId", "firstName lastName email phoneNumber")
       .exec();
 
     const totalCount = await settingModel.countDocuments(criteria);
     const stateObj = {
       page: pageNum,
       limit: limitNum,
-      page_limit: Math.ceil(totalCount / limitNum) || 1
+      page_limit: Math.ceil(totalCount / limitNum) || 1,
     };
 
     return res.status(200).json(
       new apiResponse(
         200,
-        responseMessage.getDataSuccess('setting'),
+        responseMessage.getDataSuccess("setting"),
         { setting_data: response, totalData: totalCount, state: stateObj },
         {}
       )
     );
   } catch (error) {
     console.log(error);
-    return res.status(500).json(
-      new apiResponse(500, responseMessage.internalServerError, {}, error)
-    );
+    return res
+      .status(500)
+      .json(new apiResponse(500, responseMessage.internalServerError, {}, error));
   }
 };
 
