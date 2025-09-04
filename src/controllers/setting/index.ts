@@ -106,13 +106,17 @@ export const getsettingById = async (req, res) => {
 export const getAllsetting = async (req, res) => {
   reqInfo(req);
   try {
-    let { search, page, limit, userFilter, settingFilter } = req.query;
+    let { search, page, limit, userFilter, settingFilter, weburl } = req.query;
 
     const criteria: any = { isDeleted: false };
     const options: any = { lean: true };
-    
+
     if (userFilter) criteria.userId = new ObjectId(userFilter);
-    if (settingFilter) criteria.weburl = new ObjectId(settingFilter);
+
+    if (settingFilter && weburl && settingFilter === weburl) {
+      criteria._id = new ObjectId(settingFilter as string);
+      criteria.weburl = weburl;
+    }
 
     if (search) {
       criteria.$or = [
