@@ -94,6 +94,8 @@ export const update_user = async (req, res) => {
 };
 
 export const get_all_users = async (req, res) => {
+  console.log("req.query => ", req.query);
+  
   reqInfo(req);
   try {
     let { search, page, limit } = req.query,
